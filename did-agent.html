@@ -37,10 +37,33 @@
     src="https://agent.d-id.com/v2/index.js"
     data-mode="full"
     data-client-key="Z29vZ2xlLW9hdXRoMnwxMTgyODc4NjM3MDQwODcyOTIzNTI6dXlUbGxjbDJuWlhWY003OUh3cDA0"
-    data-agent-id="v2_agt_2AbTkpPF"
+    data-agent-id="vv2_agt_TWSn-Kb3"
     data-name="did-agent"
     data-monitor="true"
     data-target-id="did-agent-container">
+  </script>
+
+  <!-- Auto-open: simula clic en el botón del agente cuando carga -->
+  <script>
+    function tryOpenAgent(attempts) {
+      if (attempts <= 0) return;
+
+      // D-ID inyecta un <did-agent> custom element con un botón interno
+      const agent = document.querySelector('did-agent');
+      if (agent && agent.shadowRoot) {
+        const btn = agent.shadowRoot.querySelector('button, [role="button"], .agent-button, .launcher');
+        if (btn) {
+          btn.click();
+          return;
+        }
+      }
+      // Reintenta cada 500ms hasta encontrar el botón
+      setTimeout(() => tryOpenAgent(attempts - 1), 500);
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(() => tryOpenAgent(20), 1000);
+    });
   </script>
 
 </body>
