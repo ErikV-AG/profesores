@@ -43,26 +43,69 @@
     data-target-id="did-agent-container">
   </script>
 
-  <!-- Auto-open: simula clic en el botón del agente cuando carga -->
+  <!-- Auto-open y traducción del botón "Start conversation" -->
   <script>
-    function tryOpenAgent(attempts) {
-      if (attempts <= 0) return;
+    const TEXTO_ORIGINAL = 'Start conversation';
+    const TEXTO_ESPAÑOL  = 'Iniciar conversación';
 
-      // D-ID inyecta un <did-agent> custom element con un botón interno
-      const agent = document.querySelector('did-agent');
-      if (agent && agent.shadowRoot) {
-        const btn = agent.shadowRoot.querySelector('button, [role="button"], .agent-button, .launcher');
-        if (btn) {
-          btn.click();
-          return;
+    // Busca el botón en el DOM normal y en Shadow DOMs
+    function findStartButton(root) {
+      // Busca en Shadow DOM si existe
+      const shadow = root.shadowRoot;
+      if (shadow) {
+        const found = findStartButton(shadow);
+        if (found) return found;
+      }
+      // Busca botones cuyo texto coincida
+      const btns = root.querySelectorAll('button, [role="button"]');
+      for (const btn of btns) {
+        if (btn.textContent.trim().toLowerCase().includes('start conversation')) {
+          return btn;
         }
       }
-      // Reintenta cada 500ms hasta encontrar el botón
-      setTimeout(() => tryOpenAgent(attempts - 1), 500);
+      // Busca en hijos con shadow root
+      for (const el of root.querySelectorAll('*')) {
+        if (el.shadowRoot) {
+          const found = findStartButton(el.shadowRoot);
+          if (found) return found;
+        }
+      }
+      return null;
     }
 
+    function tryAutoStart(attempts) {
+      if (attempts <= 0) return;
+
+      const btn = findStartButton(document);
+      if (btn) {
+        // Cambia el texto a español
+        btn.childNodes.forEach(node => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            node.textContent = node.textContent.replace(TEXTO_ORIGINAL, TEXTO_ESPAÑOL);
+          }
+        });
+        if (btn.textContent.trim() === TEXTO_ORIGINAL) {
+          btn.textContent = TEXTO_ESPAÑOL;
+        }
+        // Hace clic automático
+        btn.click();
+        return;
+      }
+
+      setTimeout(() => tryAutoStart(attempts - 1), 500);
+    }
+
+    // También observa cambios en el DOM para traducir si el botón aparece después
+    const observer = new MutationObserver(() => {
+      const btn = findStartButton(document);
+      if (btn && btn.textContent.trim().toLowerCase().includes('start conversation')) {
+        btn.textContent = TEXTO_ESPAÑOL;
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
     window.addEventListener('load', () => {
-      setTimeout(() => tryOpenAgent(20), 1000);
+      setTimeout(() => tryAutoStart(20), 1500);
     });
   </script>
 
