@@ -46,11 +46,13 @@
       'open chat':              'Abrir chat',
     };
 
-    // Traduce un árbol incluyendo todos sus Shadow DOMs
-    function traducirArbol(root) {
+    // Rastreo de shadow roots ya observados para no duplicar observers
+    const observados = new WeakSet();
+
+    function traducirNodos(root) {
       if (!root) return;
 
-      // Nodos de texto
+      // Traduce nodos de texto
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
       let n;
       while ((n = walker.nextNode())) {
@@ -77,28 +79,44 @@
           if (lower.includes(en)) { el.setAttribute('aria-label', es); break; }
         }
       });
+    }
 
-      // Entra recursivamente en cada Shadow DOM
+    // Registra observer en un shadow root solo si no lo hemos observado antes
+    function observarShadow(shadowRoot) {
+      if (observados.has(shadowRoot)) return;
+      observados.add(shadowRoot);
+      new MutationObserver(() => {
+        traducirNodos(shadowRoot);
+        registrarShadows(shadowRoot); // busca nuevos shadow roots dentro
+      }).observe(shadowRoot, { childList: true, subtree: true, characterData: true });
+    }
+
+    // Recorre el árbol buscando shadow roots nuevos
+    function registrarShadows(root) {
+      if (!root || !root.querySelectorAll) return;
       root.querySelectorAll('*').forEach(el => {
         if (el.shadowRoot) {
-          traducirArbol(el.shadowRoot);
-          // Observa cambios dentro de este shadow root también
-          new MutationObserver(() => traducirArbol(el.shadowRoot))
-            .observe(el.shadowRoot, { childList: true, subtree: true, characterData: true });
+          traducirNodos(el.shadowRoot);
+          observarShadow(el.shadowRoot);
+          registrarShadows(el.shadowRoot);
         }
       });
     }
 
-    // Observa el body principal y reintenta cada segundo
     window.addEventListener('load', () => {
-      traducirArbol(document.body);
+      traducirNodos(document.body);
+      registrarShadows(document.body);
 
-      new MutationObserver(() => traducirArbol(document.body))
-        .observe(document.body, { childList: true, subtree: true });
+      // Observer del body principal (solo detecta nuevos elementos, no recursivo)
+      new MutationObserver(() => {
+        registrarShadows(document.body);
+      }).observe(document.body, { childList: true, subtree: true });
 
-      let i = 20;
+      // Reintenta durante 15s por si el widget tarda
+      let i = 15;
       const t = setInterval(() => {
-        traducirArbol(document.body);
+        traducirNodos(document.body);
+        registrarShadows(document.body);
         if (!--i) clearInterval(t);
       }, 1000);
     });
