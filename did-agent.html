@@ -6,25 +6,8 @@
   <title>D-ID Agent</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
-    }
-
-    #did-agent-container {
-      width: 100%;
-      height: 100%;
-      position: relative;
-    }
-
-    /* Fuerza que el widget ocupe todo el contenedor */
-    #did-agent-container > * {
-      width: 100% !important;
-      height: 100% !important;
-    }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    #did-agent-container { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
@@ -63,50 +46,41 @@
       'open chat':              'Abrir chat',
     };
 
-    function traducirTexto(texto) {
-      const lower = texto.trim().toLowerCase();
-      for (const [en, es] of Object.entries(TRADUCCIONES)) {
-        if (lower === en) return es;
-      }
-      let resultado = texto;
-      for (const [en, es] of Object.entries(TRADUCCIONES)) {
-        if (lower.includes(en)) resultado = resultado.replace(new RegExp(en, 'gi'), es);
-      }
-      return resultado;
-    }
-
-    function traducirArbol(root) {
+    function traducir(root) {
       if (!root) return;
+      // Nodos de texto
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-      let nodo;
-      while ((nodo = walker.nextNode())) {
-        const t = traducirTexto(nodo.textContent);
-        if (t !== nodo.textContent) nodo.textContent = t;
+      let n;
+      while ((n = walker.nextNode())) {
+        const lower = n.textContent.trim().toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower === en) { n.textContent = es; break; }
+        }
       }
-      if (root.querySelectorAll) {
-        root.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
-          el.setAttribute('placeholder', traducirTexto(el.getAttribute('placeholder')));
-        });
-        root.querySelectorAll('[aria-label]').forEach(el => {
-          el.setAttribute('aria-label', traducirTexto(el.getAttribute('aria-label')));
-        });
-        root.querySelectorAll('*').forEach(el => {
-          if (el.shadowRoot) traducirArbol(el.shadowRoot);
-        });
-      }
+      if (!root.querySelectorAll) return;
+      // Placeholders
+      root.querySelectorAll('[placeholder]').forEach(el => {
+        const lower = el.placeholder.toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower.includes(en)) { el.placeholder = es; break; }
+        }
+      });
+      // aria-labels
+      root.querySelectorAll('[aria-label]').forEach(el => {
+        const lower = el.getAttribute('aria-label').toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower.includes(en)) { el.setAttribute('aria-label', es); break; }
+        }
+      });
+      // Shadow DOMs
+      root.querySelectorAll('*').forEach(el => {
+        if (el.shadowRoot) traducir(el.shadowRoot);
+      });
     }
 
     window.addEventListener('load', () => {
-      traducirArbol(document.body);
-      new MutationObserver(() => traducirArbol(document.body))
+      new MutationObserver(() => traducir(document.body))
         .observe(document.body, { childList: true, subtree: true, characterData: true });
-      let i = 20;
-      const t = setInterval(() => { traducirArbol(document.body); if (!--i) clearInterval(t); }, 1000);
-    });
-
-    window.addEventListener('beforeunload', () => {
-      const a = document.querySelector('did-agent');
-      if (a && a.disconnect) a.disconnect();
     });
   </script>
 
