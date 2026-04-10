@@ -5,33 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>D-ID Agent</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      background: transparent;
-      overflow: hidden;
-    }
-
-    /* El agente D-ID se inyecta como widget flotante,
-       este contenedor le da un punto de anclaje */
-    #did-agent-container {
-      width: 100%;
-      height: 100%;
-      position: relative;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; }
+    #did-agent-container { width: 100%; height: 100%; position: relative; }
   </style>
 </head>
 <body>
 
   <div id="did-agent-container"></div>
 
-  <!-- Script del agente D-ID -->
   <script
     type="module"
     src="https://agent.d-id.com/v2/index.js"
@@ -43,69 +25,71 @@
     data-target-id="did-agent-container">
   </script>
 
-  <!-- Auto-open y traducción del botón "Start conversation" -->
   <script>
-    const TEXTO_ORIGINAL = 'Start conversation';
-    const TEXTO_ESPAÑOL  = 'Iniciar conversación';
+    const TRADUCCIONES = {
+      'start conversation':     'Iniciar',
+      'connecting':             'Conectando...',
+      'type your message here': 'Escribe tu mensaje aquí',
+      'type your message':      'Escribe tu mensaje',
+      'send':                   'Enviar',
+      'end conversation':       'Terminar conversación',
+      'end':                    'Terminar',
+      'microphone':             'Micrófono',
+      'mute':                   'Silenciar',
+      'unmute':                 'Activar audio',
+      'chat':                   'Chat',
+      'reconnecting':           'Reconectando...',
+      'something went wrong':   'Algo salió mal',
+      'try again':              'Intentar de nuevo',
+      'loading':                'Cargando...',
+      'close':                  'Cerrar',
+      'open chat':              'Abrir chat',
+    };
 
-    // Busca el botón en el DOM normal y en Shadow DOMs
-    function findStartButton(root) {
-      // Busca en Shadow DOM si existe
-      const shadow = root.shadowRoot;
-      if (shadow) {
-        const found = findStartButton(shadow);
-        if (found) return found;
+    function traducirTexto(texto) {
+      const lower = texto.trim().toLowerCase();
+      for (const [en, es] of Object.entries(TRADUCCIONES)) {
+        if (lower === en) return es;
       }
-      // Busca botones cuyo texto coincida
-      const btns = root.querySelectorAll('button, [role="button"]');
-      for (const btn of btns) {
-        if (btn.textContent.trim().toLowerCase().includes('start conversation')) {
-          return btn;
-        }
+      let resultado = texto;
+      for (const [en, es] of Object.entries(TRADUCCIONES)) {
+        if (lower.includes(en)) resultado = resultado.replace(new RegExp(en, 'gi'), es);
       }
-      // Busca en hijos con shadow root
-      for (const el of root.querySelectorAll('*')) {
-        if (el.shadowRoot) {
-          const found = findStartButton(el.shadowRoot);
-          if (found) return found;
-        }
-      }
-      return null;
+      return resultado;
     }
 
-    function tryAutoStart(attempts) {
-      if (attempts <= 0) return;
-
-      const btn = findStartButton(document);
-      if (btn) {
-        // Cambia el texto a español
-        btn.childNodes.forEach(node => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            node.textContent = node.textContent.replace(TEXTO_ORIGINAL, TEXTO_ESPAÑOL);
-          }
+    function traducirArbol(root) {
+      if (!root) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let nodo;
+      while ((nodo = walker.nextNode())) {
+        const t = traducirTexto(nodo.textContent);
+        if (t !== nodo.textContent) nodo.textContent = t;
+      }
+      if (root.querySelectorAll) {
+        root.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
+          el.setAttribute('placeholder', traducirTexto(el.getAttribute('placeholder')));
         });
-        if (btn.textContent.trim() === TEXTO_ORIGINAL) {
-          btn.textContent = TEXTO_ESPAÑOL;
-        }
-        // Hace clic automático
-        btn.click();
-        return;
+        root.querySelectorAll('[aria-label]').forEach(el => {
+          el.setAttribute('aria-label', traducirTexto(el.getAttribute('aria-label')));
+        });
+        root.querySelectorAll('*').forEach(el => {
+          if (el.shadowRoot) traducirArbol(el.shadowRoot);
+        });
       }
-
-      setTimeout(() => tryAutoStart(attempts - 1), 500);
     }
-
-    // También observa cambios en el DOM para traducir si el botón aparece después
-    const observer = new MutationObserver(() => {
-      const btn = findStartButton(document);
-      if (btn && btn.textContent.trim().toLowerCase().includes('start conversation')) {
-        btn.textContent = TEXTO_ESPAÑOL;
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
 
     window.addEventListener('load', () => {
-      setTimeout(() => tryAutoStart(20), 1500);
+      traducirArbol(document.body);
+      new MutationObserver(() => traducirArbol(document.body))
+        .observe(document.body, { childList: true, subtree: true, characterData: true });
+      let i = 20;
+      const t = setInterval(() => { traducirArbol(document.body); if (!--i) clearInterval(t); }, 1000);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      const a = document.querySelector('did-agent');
+      if (a && a.disconnect) a.disconnect();
     });
   </script>
 
