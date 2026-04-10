@@ -31,8 +31,6 @@
 <body>
 
   <div id="did-agent-container"></div>
-
-  <!-- Botón discreto para terminar la conversación -->
   <button id="btn-terminar" title="Terminar conversación">✕ Terminar</button>
 
   <script
@@ -47,92 +45,52 @@
   </script>
 
   <script>
-    // Botón terminar — busca y hace clic en el botón de end del widget
+    // Botón terminar
     document.getElementById('btn-terminar').addEventListener('click', () => {
-      // Intenta encontrar el botón "End" dentro del shadow DOM de D-ID
-      function encontrarEnd(root) {
-        if (!root) return null;
-        if (root.querySelectorAll) {
-          const btns = root.querySelectorAll('button, [role="button"]');
-          for (const btn of btns) {
-            const txt = btn.textContent.trim().toLowerCase();
-            if (txt === 'end' || txt === 'terminar' || txt.includes('end conversation')) {
-              return btn;
-            }
-          }
-          for (const el of root.querySelectorAll('*')) {
-            if (el.shadowRoot) {
-              const found = encontrarEnd(el.shadowRoot);
-              if (found) return found;
-            }
-          }
-        }
-        return null;
-      }
-
-      const endBtn = encontrarEnd(document.body);
-      if (endBtn) {
-        endBtn.click();
-      } else {
-        // Si no encontró el botón interno, desconecta el agente directamente
-        const agent = document.querySelector('did-agent');
-        if (agent && agent.disconnect) agent.disconnect();
-        // Y recarga para empezar de nuevo
-        location.reload();
-      }
+      const agent = document.querySelector('did-agent');
+      if (agent && agent.disconnect) agent.disconnect();
+      location.reload();
     });
 
-    // Traducciones: placeholder e inicio
+    // Traducciones — busca en shadow DOMs recursivamente
     function traducir(root) {
-      if (!root) return;
-      if (root.querySelectorAll) {
-        root.querySelectorAll('input, textarea').forEach(el => {
-          const ph = el.getAttribute('placeholder') || '';
-          if (ph.toLowerCase().includes('type your message')) {
-            el.setAttribute('placeholder', 'Escribe tu mensaje...');
-          }
-        });
-        root.querySelectorAll('button, [role="button"]').forEach(el => {
-          el.childNodes.forEach(n => {
-            if (n.nodeType === Node.TEXT_NODE &&
-                n.textContent.trim().toLowerCase() === 'start conversation') {
-              n.textContent = 'Iniciar';
-            }
-          });
-        });
-        root.querySelectorAll('*').forEach(el => {
-          if (el.shadowRoot) traducir(el.shadowRoot);
-        });
-      }
-    }
-
-    // Oculta botones de recargar dentro del shadow DOM de D-ID
-    function ocultarRecarga(root) {
       if (!root || !root.querySelectorAll) return;
-      // Inyecta CSS en cada shadow root para ocultar botones de refresh/reload
-      if (root.nodeType === Node.DOCUMENT_FRAGMENT_NODE && !root.querySelector('style[data-ag]')) {
-        const s = document.createElement('style');
-        s.setAttribute('data-ag', '1');
-        s.textContent = `
-          [title*="reload" i], [title*="refresh" i], [title*="restart" i],
-          [aria-label*="reload" i], [aria-label*="refresh" i], [aria-label*="restart" i],
-          button[class*="reload"], button[class*="refresh"], button[class*="restart"] {
-            display: none !important;
+
+      // Inputs: placeholder
+      root.querySelectorAll('input, textarea').forEach(el => {
+        const ph = el.getAttribute('placeholder') || '';
+        if (ph.toLowerCase().includes('type your message')) {
+          el.setAttribute('placeholder', 'Escribe tu mensaje...');
+        }
+      });
+
+      // Botones: texto exacto
+      root.querySelectorAll('button, [role="button"]').forEach(el => {
+        el.childNodes.forEach(n => {
+          if (n.nodeType === Node.TEXT_NODE) {
+            const txt = n.textContent.trim().toLowerCase();
+            if (txt === 'start conversation') n.textContent = 'Iniciar';
           }
-        `;
-        root.appendChild(s);
-      }
+        });
+      });
+
+      // Entra en cada shadow root
       root.querySelectorAll('*').forEach(el => {
-        if (el.shadowRoot) ocultarRecarga(el.shadowRoot);
+        if (el.shadowRoot) traducir(el.shadowRoot);
       });
     }
 
-    let i = 30;
+    // Ejecuta cada 500ms durante 30 segundos
+    let i = 60;
     const t = setInterval(() => {
       traducir(document.body);
-      ocultarRecarga(document.body);
       if (!--i) clearInterval(t);
     }, 500);
+
+    // También re-traduce tras cada clic
+    document.addEventListener('click', () => {
+      setTimeout(() => traducir(document.body), 400);
+    });
   </script>
 
 </body>
