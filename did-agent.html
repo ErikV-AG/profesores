@@ -27,99 +27,58 @@
 
   <script>
     const TRADUCCIONES = {
-      'start conversation':     'Iniciar',
-      'connecting':             'Conectando...',
-      'type your message here': 'Escribe tu mensaje aquí',
-      'type your message':      'Escribe tu mensaje',
-      'send':                   'Enviar',
-      'end conversation':       'Terminar conversación',
-      'end':                    'Terminar',
-      'microphone':             'Micrófono',
-      'mute':                   'Silenciar',
-      'unmute':                 'Activar audio',
-      'chat':                   'Chat',
-      'reconnecting':           'Reconectando...',
-      'something went wrong':   'Algo salió mal',
-      'try again':              'Intentar de nuevo',
-      'loading':                'Cargando...',
-      'close':                  'Cerrar',
-      'open chat':              'Abrir chat',
+      'Start conversation': 'Iniciar',
+      'Connecting':         'Conectando...',
+      'Initializing':       'Iniciando...',
+      'Type your message':  'Escribe tu mensaje',
+      'Send':               'Enviar',
+      'End':                'Terminar',
+      'Microphone':         'Micrófono',
+      'Mute':               'Silenciar',
+      'Unmute':             'Activar audio',
+      'Chat':               'Chat',
+      'Reconnecting':       'Reconectando...',
+      'Something went wrong': 'Algo salió mal',
+      'Try again':          'Intentar de nuevo',
+      'Loading':            'Cargando...',
+      'Close':              'Cerrar',
     };
 
-    // Rastreo de shadow roots ya observados para no duplicar observers
-    const observados = new WeakSet();
-
-    function traducirNodos(root) {
+    function traducirRoot(root) {
       if (!root) return;
 
-      // Traduce nodos de texto
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-      let n;
-      while ((n = walker.nextNode())) {
-        const lower = n.textContent.trim().toLowerCase();
-        for (const [en, es] of Object.entries(TRADUCCIONES)) {
-          if (lower === en) { n.textContent = es; break; }
+      // Reemplaza texto en todos los nodos
+      root.querySelectorAll && root.querySelectorAll('*').forEach(el => {
+        // Texto directo del elemento (no hijos)
+        el.childNodes.forEach(child => {
+          if (child.nodeType === Node.TEXT_NODE) {
+            const txt = child.textContent.trim();
+            if (TRADUCCIONES[txt]) child.textContent = TRADUCCIONES[txt];
+          }
+        });
+        // Placeholder
+        if (el.placeholder && TRADUCCIONES[el.placeholder]) {
+          el.placeholder = TRADUCCIONES[el.placeholder];
         }
-      }
-
-      if (!root.querySelectorAll) return;
-
-      // Placeholders
-      root.querySelectorAll('[placeholder]').forEach(el => {
-        const lower = el.placeholder.toLowerCase();
-        for (const [en, es] of Object.entries(TRADUCCIONES)) {
-          if (lower.includes(en)) { el.placeholder = es; break; }
-        }
+        // aria-label
+        const label = el.getAttribute && el.getAttribute('aria-label');
+        if (label && TRADUCCIONES[label]) el.setAttribute('aria-label', TRADUCCIONES[label]);
       });
 
-      // aria-labels
-      root.querySelectorAll('[aria-label]').forEach(el => {
-        const lower = el.getAttribute('aria-label').toLowerCase();
-        for (const [en, es] of Object.entries(TRADUCCIONES)) {
-          if (lower.includes(en)) { el.setAttribute('aria-label', es); break; }
-        }
+      // Entra en shadow roots
+      root.querySelectorAll && root.querySelectorAll('*').forEach(el => {
+        if (el.shadowRoot) traducirRoot(el.shadowRoot);
       });
     }
 
-    // Registra observer en un shadow root solo si no lo hemos observado antes
-    function observarShadow(shadowRoot) {
-      if (observados.has(shadowRoot)) return;
-      observados.add(shadowRoot);
-      new MutationObserver(() => {
-        traducirNodos(shadowRoot);
-        registrarShadows(shadowRoot); // busca nuevos shadow roots dentro
-      }).observe(shadowRoot, { childList: true, subtree: true, characterData: true });
-    }
-
-    // Recorre el árbol buscando shadow roots nuevos
-    function registrarShadows(root) {
-      if (!root || !root.querySelectorAll) return;
-      root.querySelectorAll('*').forEach(el => {
-        if (el.shadowRoot) {
-          traducirNodos(el.shadowRoot);
-          observarShadow(el.shadowRoot);
-          registrarShadows(el.shadowRoot);
-        }
-      });
-    }
-
-    window.addEventListener('load', () => {
-      traducirNodos(document.body);
-      registrarShadows(document.body);
-
-      // Observer del body principal (solo detecta nuevos elementos, no recursivo)
-      new MutationObserver(() => {
-        registrarShadows(document.body);
-      }).observe(document.body, { childList: true, subtree: true });
-
-      // Reintenta durante 15s por si el widget tarda
-      let i = 15;
-      const t = setInterval(() => {
-        traducirNodos(document.body);
-        registrarShadows(document.body);
-        if (!--i) clearInterval(t);
-      }, 1000);
-    });
+    // Ejecuta la traducción cada 500ms durante los primeros 10 segundos
+    // Cubre: carga inicial, connecting, initializing, y apertura del chat
+    let intentos = 0;
+    const MAX = 20; // 20 x 500ms = 10 segundos
+    const intervalo = setInterval(() => {
+      traducirRoot(document.body);
+      if (++intentos >= MAX) clearInterval(intervalo);
+    }, 500);
   </script>
 
 </body>
