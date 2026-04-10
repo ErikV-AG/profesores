@@ -31,6 +31,7 @@
 <body>
 
   <div id="did-agent-container"></div>
+
   <button id="btn-terminar" title="Terminar conversación">✕ Terminar</button>
 
   <script
@@ -47,49 +48,96 @@
   <script>
     // Botón terminar
     document.getElementById('btn-terminar').addEventListener('click', () => {
-      const agent = document.querySelector('did-agent');
-      if (agent && agent.disconnect) agent.disconnect();
-      location.reload();
+      function encontrarEnd(root) {
+        if (!root) return null;
+        if (root.querySelectorAll) {
+          const btns = root.querySelectorAll('button, [role="button"]');
+          for (const btn of btns) {
+            const txt = btn.textContent.trim().toLowerCase();
+            if (txt === 'end' || txt === 'terminar' || txt.includes('end conversation')) {
+              return btn;
+            }
+          }
+          for (const el of root.querySelectorAll('*')) {
+            if (el.shadowRoot) {
+              const found = encontrarEnd(el.shadowRoot);
+              if (found) return found;
+            }
+          }
+        }
+        return null;
+      }
+
+      const endBtn = encontrarEnd(document.body);
+      if (endBtn) {
+        endBtn.click();
+      } else {
+        const agent = document.querySelector('did-agent');
+        if (agent && agent.disconnect) agent.disconnect();
+        location.reload();
+      }
     });
 
-    // Traducciones — busca en shadow DOMs recursivamente
-    function traducir(root) {
-      if (!root || !root.querySelectorAll) return;
+    // Traducciones
+    const TRADUCCIONES = {
+      'start conversation':     'Iniciar',
+      'connecting':             'Conectando...',
+      'type your message here': 'Escribe tu mensaje aquí',
+      'type your message':      'Escribe tu mensaje',
+      'send':                   'Enviar',
+      'end conversation':       'Terminar conversación',
+      'end':                    'Terminar',
+      'microphone':             'Micrófono',
+      'mute':                   'Silenciar',
+      'unmute':                 'Activar audio',
+      'chat':                   'Chat',
+      'reconnecting':           'Reconectando...',
+      'something went wrong':   'Algo salió mal',
+      'try again':              'Intentar de nuevo',
+      'loading':                'Cargando...',
+      'close':                  'Cerrar',
+      'open chat':              'Abrir chat',
+    };
 
-      // Inputs: placeholder
-      root.querySelectorAll('input, textarea').forEach(el => {
-        const ph = el.getAttribute('placeholder') || '';
-        if (ph.toLowerCase().includes('type your message')) {
-          el.setAttribute('placeholder', 'Escribe tu mensaje...');
+    function traducirArbol(root) {
+      if (!root) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let nodo;
+      while ((nodo = walker.nextNode())) {
+        const lower = nodo.textContent.trim().toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower === en) { nodo.textContent = es; break; }
+        }
+      }
+      if (!root.querySelectorAll) return;
+      root.querySelectorAll('[placeholder]').forEach(el => {
+        const lower = el.placeholder.toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower.includes(en)) { el.placeholder = es; break; }
         }
       });
-
-      // Botones: texto exacto
-      root.querySelectorAll('button, [role="button"]').forEach(el => {
-        el.childNodes.forEach(n => {
-          if (n.nodeType === Node.TEXT_NODE) {
-            const txt = n.textContent.trim().toLowerCase();
-            if (txt === 'start conversation') n.textContent = 'Iniciar';
-          }
-        });
+      root.querySelectorAll('[aria-label]').forEach(el => {
+        const lower = el.getAttribute('aria-label').toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower.includes(en)) { el.setAttribute('aria-label', es); break; }
+        }
       });
-
-      // Entra en cada shadow root
       root.querySelectorAll('*').forEach(el => {
-        if (el.shadowRoot) traducir(el.shadowRoot);
+        if (el.shadowRoot) traducirArbol(el.shadowRoot);
       });
     }
 
-    // Ejecuta cada 500ms durante 30 segundos
-    let i = 60;
-    const t = setInterval(() => {
-      traducir(document.body);
-      if (!--i) clearInterval(t);
-    }, 500);
+    window.addEventListener('load', () => {
+      traducirArbol(document.body);
+      new MutationObserver(() => traducirArbol(document.body))
+        .observe(document.body, { childList: true, subtree: true });
+      let i = 20;
+      const t = setInterval(() => { traducirArbol(document.body); if (!--i) clearInterval(t); }, 1000);
+    });
 
-    // También re-traduce tras cada clic
-    document.addEventListener('click', () => {
-      setTimeout(() => traducir(document.body), 400);
+    window.addEventListener('beforeunload', () => {
+      const a = document.querySelector('did-agent');
+      if (a && a.disconnect) a.disconnect();
     });
   </script>
 
