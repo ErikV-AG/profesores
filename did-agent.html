@@ -46,8 +46,10 @@
       'open chat':              'Abrir chat',
     };
 
-    function traducir(root) {
+    // Traduce un árbol incluyendo todos sus Shadow DOMs
+    function traducirArbol(root) {
       if (!root) return;
+
       // Nodos de texto
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
       let n;
@@ -57,7 +59,9 @@
           if (lower === en) { n.textContent = es; break; }
         }
       }
+
       if (!root.querySelectorAll) return;
+
       // Placeholders
       root.querySelectorAll('[placeholder]').forEach(el => {
         const lower = el.placeholder.toLowerCase();
@@ -65,6 +69,7 @@
           if (lower.includes(en)) { el.placeholder = es; break; }
         }
       });
+
       // aria-labels
       root.querySelectorAll('[aria-label]').forEach(el => {
         const lower = el.getAttribute('aria-label').toLowerCase();
@@ -72,15 +77,30 @@
           if (lower.includes(en)) { el.setAttribute('aria-label', es); break; }
         }
       });
-      // Shadow DOMs
+
+      // Entra recursivamente en cada Shadow DOM
       root.querySelectorAll('*').forEach(el => {
-        if (el.shadowRoot) traducir(el.shadowRoot);
+        if (el.shadowRoot) {
+          traducirArbol(el.shadowRoot);
+          // Observa cambios dentro de este shadow root también
+          new MutationObserver(() => traducirArbol(el.shadowRoot))
+            .observe(el.shadowRoot, { childList: true, subtree: true, characterData: true });
+        }
       });
     }
 
-    window.addEventListener("load", () => {
-      new MutationObserver(() => traducir(document.body))
-        .observe(document.body, { childList: true, subtree: true, characterData: true });
+    // Observa el body principal y reintenta cada segundo
+    window.addEventListener('load', () => {
+      traducirArbol(document.body);
+
+      new MutationObserver(() => traducirArbol(document.body))
+        .observe(document.body, { childList: true, subtree: true });
+
+      let i = 20;
+      const t = setInterval(() => {
+        traducirArbol(document.body);
+        if (!--i) clearInterval(t);
+      }, 1000);
     });
   </script>
 
