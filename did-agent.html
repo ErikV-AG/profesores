@@ -8,11 +8,32 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; }
     #did-agent-container { width: 100%; height: 100%; }
+
+    #btn-terminar {
+      position: fixed;
+      top: 10px;
+      right: 14px;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    #btn-terminar:hover { opacity: 1; }
   </style>
 </head>
 <body>
 
   <div id="did-agent-container"></div>
+
+  <!-- Botón discreto para terminar la conversación -->
+  <button id="btn-terminar" title="Terminar conversación">✕ Terminar</button>
 
   <script
     type="module"
@@ -26,59 +47,67 @@
   </script>
 
   <script>
-    const TRADUCCIONES = {
-      'Start conversation': 'Iniciar',
-      'Connecting':         'Conectando...',
-      'Initializing':       'Iniciando...',
-      'Type your message':  'Escribe tu mensaje',
-      'Send':               'Enviar',
-      'End':                'Terminar',
-      'Microphone':         'Micrófono',
-      'Mute':               'Silenciar',
-      'Unmute':             'Activar audio',
-      'Chat':               'Chat',
-      'Reconnecting':       'Reconectando...',
-      'Something went wrong': 'Algo salió mal',
-      'Try again':          'Intentar de nuevo',
-      'Loading':            'Cargando...',
-      'Close':              'Cerrar',
-    };
+    // Botón terminar — busca y hace clic en el botón de end del widget
+    document.getElementById('btn-terminar').addEventListener('click', () => {
+      // Intenta encontrar el botón "End" dentro del shadow DOM de D-ID
+      function encontrarEnd(root) {
+        if (!root) return null;
+        if (root.querySelectorAll) {
+          const btns = root.querySelectorAll('button, [role="button"]');
+          for (const btn of btns) {
+            const txt = btn.textContent.trim().toLowerCase();
+            if (txt === 'end' || txt === 'terminar' || txt.includes('end conversation')) {
+              return btn;
+            }
+          }
+          for (const el of root.querySelectorAll('*')) {
+            if (el.shadowRoot) {
+              const found = encontrarEnd(el.shadowRoot);
+              if (found) return found;
+            }
+          }
+        }
+        return null;
+      }
 
-    function traducirRoot(root) {
+      const endBtn = encontrarEnd(document.body);
+      if (endBtn) {
+        endBtn.click();
+      } else {
+        // Si no encontró el botón interno, desconecta el agente directamente
+        const agent = document.querySelector('did-agent');
+        if (agent && agent.disconnect) agent.disconnect();
+        // Y recarga para empezar de nuevo
+        location.reload();
+      }
+    });
+
+    // Traducciones: placeholder e inicio
+    function traducir(root) {
       if (!root) return;
-
-      // Reemplaza texto en todos los nodos
-      root.querySelectorAll && root.querySelectorAll('*').forEach(el => {
-        // Texto directo del elemento (no hijos)
-        el.childNodes.forEach(child => {
-          if (child.nodeType === Node.TEXT_NODE) {
-            const txt = child.textContent.trim();
-            if (TRADUCCIONES[txt]) child.textContent = TRADUCCIONES[txt];
+      if (root.querySelectorAll) {
+        root.querySelectorAll('input, textarea').forEach(el => {
+          const ph = el.getAttribute('placeholder') || '';
+          if (ph.toLowerCase().includes('type your message')) {
+            el.setAttribute('placeholder', 'Escribe tu mensaje...');
           }
         });
-        // Placeholder
-        if (el.placeholder && TRADUCCIONES[el.placeholder]) {
-          el.placeholder = TRADUCCIONES[el.placeholder];
-        }
-        // aria-label
-        const label = el.getAttribute && el.getAttribute('aria-label');
-        if (label && TRADUCCIONES[label]) el.setAttribute('aria-label', TRADUCCIONES[label]);
-      });
-
-      // Entra en shadow roots
-      root.querySelectorAll && root.querySelectorAll('*').forEach(el => {
-        if (el.shadowRoot) traducirRoot(el.shadowRoot);
-      });
+        root.querySelectorAll('button, [role="button"]').forEach(el => {
+          el.childNodes.forEach(n => {
+            if (n.nodeType === Node.TEXT_NODE &&
+                n.textContent.trim().toLowerCase() === 'start conversation') {
+              n.textContent = 'Iniciar';
+            }
+          });
+        });
+        root.querySelectorAll('*').forEach(el => {
+          if (el.shadowRoot) traducir(el.shadowRoot);
+        });
+      }
     }
 
-    // Ejecuta la traducción cada 500ms durante los primeros 10 segundos
-    // Cubre: carga inicial, connecting, initializing, y apertura del chat
-    let intentos = 0;
-    const MAX = 20; // 20 x 500ms = 10 segundos
-    const intervalo = setInterval(() => {
-      traducirRoot(document.body);
-      if (++intentos >= MAX) clearInterval(intervalo);
-    }, 500);
+    let i = 30;
+    const t = setInterval(() => { traducir(document.body); if (!--i) clearInterval(t); }, 500);
   </script>
 
 </body>
