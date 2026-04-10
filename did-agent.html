@@ -78,7 +78,7 @@
       });
     }
 
-    window.addEventListener('load', () => {
+    window.addEventListener("load", () => {
       new MutationObserver(() => traducir(document.body))
         .observe(document.body, { childList: true, subtree: true, characterData: true });
     });
