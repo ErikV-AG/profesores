@@ -12,7 +12,7 @@
     #btn-terminar {
       position: fixed;
       top: 10px;
-      right: 14px;
+      left: 14px;
       z-index: 9999;
       background: rgba(0, 0, 0, 0.45);
       color: #fff;
@@ -106,8 +106,33 @@
       }
     }
 
+    // Oculta botones de recargar dentro del shadow DOM de D-ID
+    function ocultarRecarga(root) {
+      if (!root || !root.querySelectorAll) return;
+      // Inyecta CSS en cada shadow root para ocultar botones de refresh/reload
+      if (root.nodeType === Node.DOCUMENT_FRAGMENT_NODE && !root.querySelector('style[data-ag]')) {
+        const s = document.createElement('style');
+        s.setAttribute('data-ag', '1');
+        s.textContent = `
+          [title*="reload" i], [title*="refresh" i], [title*="restart" i],
+          [aria-label*="reload" i], [aria-label*="refresh" i], [aria-label*="restart" i],
+          button[class*="reload"], button[class*="refresh"], button[class*="restart"] {
+            display: none !important;
+          }
+        `;
+        root.appendChild(s);
+      }
+      root.querySelectorAll('*').forEach(el => {
+        if (el.shadowRoot) ocultarRecarga(el.shadowRoot);
+      });
+    }
+
     let i = 30;
-    const t = setInterval(() => { traducir(document.body); if (!--i) clearInterval(t); }, 500);
+    const t = setInterval(() => {
+      traducir(document.body);
+      ocultarRecarga(document.body);
+      if (!--i) clearInterval(t);
+    }, 500);
   </script>
 
 </body>
