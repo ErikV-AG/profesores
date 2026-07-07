@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>D-ID Agent</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    #did-agent-container { width: 100%; height: 100%; }
+
+    #btn-terminar {
+      position: fixed;
+      top: 10px;
+      left: 14px;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    #btn-terminar:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <div id="did-agent-container"></div>
+
+  <button id="btn-terminar" title="Terminar conversación">✕ Terminar</button>
+
+  <script 
+    type="module"
+    src="https://agent.d-id.com/v2/index.js"
+    data-mode="full"
+    data-client-key="ck_eyyK7_Zv86si3Q37KaN6p"
+    data-agent-id="v2_agt_eJc2Ju1A"
+    data-name="did-agent"
+    data-monitor="true"
+    data-target-id="did-agent-container">
+  </script>
+
+  <script>
+    // Botón terminar
+    document.getElementById('btn-terminar').addEventListener('click', () => {
+      function encontrarEnd(root) {
+        if (!root) return null;
+        if (root.querySelectorAll) {
+          const btns = root.querySelectorAll('button, [role="button"]');
+          for (const btn of btns) {
+            const txt = btn.textContent.trim().toLowerCase();
+            if (txt === 'end' || txt === 'terminar' || txt.includes('end conversation')) {
+              return btn;
+            }
+          }
+          for (const el of root.querySelectorAll('*')) {
+            if (el.shadowRoot) {
+              const found = encontrarEnd(el.shadowRoot);
+              if (found) return found;
+            }
+          }
+        }
+        return null;
+      }
+
+      const endBtn = encontrarEnd(document.body);
+      if (endBtn) {
+        endBtn.click();
+      } else {
+        const agent = document.querySelector('did-agent');
+        if (agent && agent.disconnect) agent.disconnect();
+        location.reload();
+      }
+    });
+
+    // Traducciones
+    const TRADUCCIONES = {
+      'start conversation':     'Iniciar',
+      'connecting':             'Conectando...',
+      'type your message here': 'Escribe tu mensaje aquí',
+      'type your message':      'Escribe tu mensaje',
+      'send':                   'Enviar',
+      'end conversation':       'Terminar conversación',
+      'end':                    'Terminar',
+      'microphone':             'Micrófono',
+      'mute':                   'Silenciar',
+      'unmute':                 'Activar audio',
+      'chat':                   'Chat',
+      'reconnecting':           'Reconectando...',
+      'something went wrong':   'Algo salió mal',
+      'try again':              'Intentar de nuevo',
+      'loading':                'Cargando...',
+      'close':                  'Cerrar',
+      'open chat':              'Abrir chat',
+    };
+
+    function traducirArbol(root) {
+      if (!root) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let nodo;
+      while ((nodo = walker.nextNode())) {
+        const lower = nodo.textContent.trim().toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower === en) { nodo.textContent = es; break; }
+        }
+      }
+      if (!root.querySelectorAll) return;
+      root.querySelectorAll('[placeholder]').forEach(el => {
+        const lower = el.placeholder.toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower.includes(en)) { el.placeholder = es; break; }
+        }
+      });
+      root.querySelectorAll('[aria-label]').forEach(el => {
+        const lower = el.getAttribute('aria-label').toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower.includes(en)) { el.setAttribute('aria-label', es); break; }
+        }
+      });
+      root.querySelectorAll('*').forEach(el => {
+        if (el.shadowRoot) traducirArbol(el.shadowRoot);
+      });
+    }
+
+    window.addEventListener('load', () => {
+      traducirArbol(document.body);
+      new MutationObserver(() => traducirArbol(document.body))
+        .observe(document.body, { childList: true, subtree: true });
+      let i = 20;
+      const t = setInterval(() => { traducirArbol(document.body); if (!--i) clearInterval(t); }, 1000);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      const a = document.querySelector('did-agent');
+      if (a && a.disconnect) a.disconnect();
+    });
+  </script>
+
+</body>
+</html>
