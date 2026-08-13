@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>D-ID Agent</title>
+  <title>Agente D-ID</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; }
@@ -46,31 +46,200 @@
   </script>
 
   <script>
-    // Botón terminar
-    document.getElementById('btn-terminar').addEventListener('click', () => {
-      function encontrarEnd(root) {
-        if (!root) return null;
-        if (root.querySelectorAll) {
-          const btns = root.querySelectorAll('button, [role="button"]');
-          for (const btn of btns) {
-            const txt = btn.textContent.trim().toLowerCase();
-            if (txt === 'end' || txt === 'terminar' || txt.includes('end conversation')) {
-              return btn;
-            }
-          }
-          for (const el of root.querySelectorAll('*')) {
-            if (el.shadowRoot) {
-              const found = encontrarEnd(el.shadowRoot);
-              if (found) return found;
-            }
-          }
-        }
-        return null;
+  (function () {
+    'use strict';
+
+    /* ------------------------------------------------------------------
+       Diccionario: llaves EXACTAS (en minúsculas) que emite el embed v2.
+       Verificadas directamente contra el shadow DOM del widget.
+    ------------------------------------------------------------------ */
+    const TRADUCCIONES = {
+      // --- Pantalla previa a la llamada ---
+      'start call':                  'Iniciar llamada',
+      'start conversation':          'Iniciar conversación',
+      'starting...':                 'Iniciando...',
+      'starting':                    'Iniciando',
+      'connecting...':               'Conectando...',
+      'connecting':                  'Conectando',
+      'connecting overlay':          'Pantalla de conexión',
+      'loading...':                  'Cargando...',
+      'loading':                     'Cargando',
+      'welcome message':             'Mensaje de bienvenida',
+
+      // --- Controles en llamada ---
+      'control header':              'Encabezado de controles',
+      'main controls':               'Controles principales',
+      'expand menu':                 'Abrir menú',
+      'collapse menu':               'Cerrar menú',
+      'mute microphone':             'Silenciar micrófono',
+      'unmute microphone':           'Activar micrófono',
+      'mute':                        'Silenciar',
+      'unmute':                      'Activar audio',
+      'end call':                    'Terminar llamada',
+      'end conversation':            'Terminar conversación',
+      'end':                         'Terminar',
+
+      // --- Chat ---
+      'chat':                        'Chat',
+      'open chat':                   'Abrir chat',
+      'close chat':                  'Cerrar chat',
+      'type your message here...':   'Escribe tu mensaje aquí...',
+      'type your message here':      'Escribe tu mensaje aquí',
+      'type your message...':        'Escribe tu mensaje...',
+      'type your message':           'Escribe tu mensaje',
+      'send message':                'Enviar mensaje',
+      'send':                        'Enviar',
+      'agent response':              'Respuesta del agente',
+      'agent is thinking':           'El agente está pensando',
+      'agent idle video':            'Video del agente en espera',
+      'agent video stream':          'Video del agente en vivo',
+
+      // --- Menú de dispositivos de audio ---
+      'select audio device':         'Seleccionar dispositivo de audio',
+      'microphone':                  'Micrófono',
+      'speakers':                    'Bocinas',
+      'default':                     'Predeterminado',
+
+      // --- Errores / reconexión ---
+      'reconnecting...':             'Reconectando...',
+      'reconnecting':                'Reconectando',
+      'something went wrong':        'Algo salió mal',
+      'try again':                   'Intentar de nuevo',
+      'close':                       'Cerrar',
+
+      // Quita esta línea si prefieres conservar el distintivo "AI"
+      'ai':                          'IA',
+    };
+
+    const ATRIBUTOS = ['placeholder', 'aria-label', 'title', 'alt'];
+
+    function traducir(txt) {
+      if (!txt) return null;
+      return TRADUCCIONES[txt.trim().toLowerCase()] || null;
+    }
+
+    /* ------------------------------------------------------------------
+       Traduce un árbol (documento o shadow root)
+    ------------------------------------------------------------------ */
+    function traducirArbol(root) {
+      if (!root) return;
+
+      // Nodos de texto
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let nodo;
+      while ((nodo = walker.nextNode())) {
+        const es = traducir(nodo.textContent);
+        if (es && nodo.textContent.trim() !== es) nodo.textContent = es;
       }
 
-      const endBtn = encontrarEnd(document.body);
-      if (endBtn) {
-        endBtn.click();
+      if (!root.querySelectorAll) return;
+
+      // Atributos visibles / accesibles
+      root.querySelectorAll('*').forEach(el => {
+        ATRIBUTOS.forEach(attr => {
+          const val = el.getAttribute && el.getAttribute(attr);
+          if (!val) return;
+          const es = traducir(val);
+          if (!es || es === val) return;
+          // Guardamos el original en inglés: sirve para ubicar botones
+          // por su identidad real aunque ya estén traducidos.
+          if (!el.dataset.enOriginal) el.dataset.enOriginal = val.trim().toLowerCase();
+          el.setAttribute(attr, es);
+        });
+      });
+    }
+
+    /* ------------------------------------------------------------------
+       Recorre el documento y TODOS los shadow roots.
+       Clave: un MutationObserver sobre document.body NO detecta cambios
+       dentro de un shadow root, así que hay que observar cada uno.
+    ------------------------------------------------------------------ */
+    const observados = new WeakSet();
+    let aplicando = false;
+    let pendiente = null;
+
+    function programar() {
+      if (aplicando) return;
+      clearTimeout(pendiente);
+      pendiente = setTimeout(aplicar, 60);
+    }
+
+    const observer = new MutationObserver(programar);
+    const OPCIONES = {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ATRIBUTOS,
+    };
+
+    function recorrer(root) {
+      if (!root) return;
+      traducirArbol(root);
+
+      if (!observados.has(root)) {
+        observados.add(root);
+        observer.observe(root, OPCIONES);
+      }
+
+      if (!root.querySelectorAll) return;
+      root.querySelectorAll('*').forEach(el => {
+        if (el.shadowRoot) recorrer(el.shadowRoot);
+      });
+    }
+
+    function aplicar() {
+      aplicando = true;
+      try { recorrer(document.body); } catch (e) { /* silencio */ }
+      // Los callbacks del observer son microtareas; este setTimeout(0)
+      // se ejecuta después, liberando el candado sin bucle infinito.
+      setTimeout(() => { aplicando = false; }, 0);
+    }
+
+    /* ------------------------------------------------------------------
+       Arranque + red de seguridad periódica (el widget monta tarde)
+    ------------------------------------------------------------------ */
+    function iniciar() {
+      aplicar();
+      setInterval(aplicar, 1500);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', iniciar);
+    } else {
+      iniciar();
+    }
+
+    /* ------------------------------------------------------------------
+       Botón "Terminar" propio
+    ------------------------------------------------------------------ */
+    function buscarBotonFin(root) {
+      if (!root || !root.querySelectorAll) return null;
+
+      const candidatos = root.querySelectorAll('button, [role="button"]');
+      for (const btn of candidatos) {
+        const original = btn.dataset ? btn.dataset.enOriginal : '';
+        const label = (btn.getAttribute('aria-label') || '').trim().toLowerCase();
+        const texto = (btn.textContent || '').trim().toLowerCase();
+
+        if (original === 'end call' || original === 'end conversation' || original === 'end') return btn;
+        if (label === 'end call' || label === 'terminar llamada') return btn;
+        if (texto === 'end' || texto === 'terminar' || texto.includes('end conversation')) return btn;
+      }
+
+      for (const el of root.querySelectorAll('*')) {
+        if (el.shadowRoot) {
+          const hallado = buscarBotonFin(el.shadowRoot);
+          if (hallado) return hallado;
+        }
+      }
+      return null;
+    }
+
+    document.getElementById('btn-terminar').addEventListener('click', () => {
+      const btn = buscarBotonFin(document.body);
+      if (btn) {
+        btn.click();
       } else {
         const agent = document.querySelector('did-agent');
         if (agent && agent.disconnect) agent.disconnect();
@@ -78,67 +247,11 @@
       }
     });
 
-    // Traducciones
-    const TRADUCCIONES = {
-      'start conversation':     'Iniciar',
-      'connecting':             'Conectando...',
-      'type your message here': 'Escribe tu mensaje aquí',
-      'type your message':      'Escribe tu mensaje',
-      'send':                   'Enviar',
-      'end conversation':       'Terminar conversación',
-      'end':                    'Terminar',
-      'microphone':             'Micrófono',
-      'mute':                   'Silenciar',
-      'unmute':                 'Activar audio',
-      'chat':                   'Chat',
-      'reconnecting':           'Reconectando...',
-      'something went wrong':   'Algo salió mal',
-      'try again':              'Intentar de nuevo',
-      'loading':                'Cargando...',
-      'close':                  'Cerrar',
-      'open chat':              'Abrir chat',
-    };
-
-    function traducirArbol(root) {
-      if (!root) return;
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-      let nodo;
-      while ((nodo = walker.nextNode())) {
-        const lower = nodo.textContent.trim().toLowerCase();
-        for (const [en, es] of Object.entries(TRADUCCIONES)) {
-          if (lower === en) { nodo.textContent = es; break; }
-        }
-      }
-      if (!root.querySelectorAll) return;
-      root.querySelectorAll('[placeholder]').forEach(el => {
-        const lower = el.placeholder.toLowerCase();
-        for (const [en, es] of Object.entries(TRADUCCIONES)) {
-          if (lower.includes(en)) { el.placeholder = es; break; }
-        }
-      });
-      root.querySelectorAll('[aria-label]').forEach(el => {
-        const lower = el.getAttribute('aria-label').toLowerCase();
-        for (const [en, es] of Object.entries(TRADUCCIONES)) {
-          if (lower.includes(en)) { el.setAttribute('aria-label', es); break; }
-        }
-      });
-      root.querySelectorAll('*').forEach(el => {
-        if (el.shadowRoot) traducirArbol(el.shadowRoot);
-      });
-    }
-
-    window.addEventListener('load', () => {
-      traducirArbol(document.body);
-      new MutationObserver(() => traducirArbol(document.body))
-        .observe(document.body, { childList: true, subtree: true });
-      let i = 20;
-      const t = setInterval(() => { traducirArbol(document.body); if (!--i) clearInterval(t); }, 1000);
-    });
-
     window.addEventListener('beforeunload', () => {
       const a = document.querySelector('did-agent');
       if (a && a.disconnect) a.disconnect();
     });
+  })();
   </script>
 
 </body>
