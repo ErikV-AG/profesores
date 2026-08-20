@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agente D-ID</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    #did-agent-container { width: 100%; height: 100%; }
+
+    #btn-terminar {
+      position: fixed;
+      top: 10px;
+      left: 14px;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    #btn-terminar:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <div id="did-agent-container"></div>
+
+  <button id="btn-terminar" title="Terminar conversación">✕ Terminar</button>
+
+  <script
+    type="module"
+    src="https://agent.d-id.com/v2/index.js"
+    data-mode="full"
+    data-client-key="ck_2mgORMfxcXaVCayqFtuSJ"
+    data-agent-id="v2_agt_2AbTkpPF"
+    data-name="did-agent"
+    data-monitor="true"
+    data-target-id="did-agent-container">
+  </script>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ==================================================================
+       Diccionario completo del embed D-ID v2 (build 2.1.27).
+       Las llaves son las cadenas EXACTAS del bundle, en minúsculas.
+       El widget solo trae inglés y alemán de fábrica: no existe opción
+       de configuración para español, por eso se parchea el DOM.
+    ================================================================== */
+    const TRADUCCIONES = {
+
+      /* ---------- Arranque / conexión ---------- */
+      'start call':                    'Iniciar llamada',
+      'starting...':                   'Iniciando...',
+      'connecting...':                 'Conectando...',
+      'loading...':                    'Cargando...',
+      'hang tight':                    'Un momento',
+      'reconnect':                     'Reconectar',
+      'continue call...':              'Continuar llamada...',
+      "let's continue":                'Continuemos',
+      'create new call':               'Crear nueva llamada',
+      'start a new call':              'Iniciar una nueva llamada',
+      'want to continue where we left off?': '¿Quieres continuar donde nos quedamos?',
+      'are you still here?':           '¿Sigues ahí?',
+      'call ended':                    'Llamada finalizada',
+      'understood':                    'Entendido',
+      'skip':                          'Omitir',
+      'close':                         'Cerrar',
+
+      /* ---------- Controles de llamada ---------- */
+      'end call':                      'Terminar llamada',
+      'turn microphone on':            'Encender micrófono',
+      'mute microphone':               'Silenciar micrófono',
+      'unmute microphone':             'Activar micrófono',
+      'turn off speakers':             'Apagar bocinas',
+      'turn on captions':              'Activar subtítulos',
+      'turn off captions':             'Desactivar subtítulos',
+      'expand menu':                   'Abrir menú',
+      'collapse menu':                 'Cerrar menú',
+      'select audio device':           'Seleccionar dispositivo de audio',
+      'microphone':                    'Micrófono',
+      'speakers':                      'Bocinas',
+      'camera':                        'Cámara',
+      'talk to interrupt':             'Habla para interrumpir',
+
+      /* ---------- Chat ---------- */
+      'chat':                          'Chat',
+      'chat history':                  'Historial de chat',
+      'chat messages':                 'Mensajes del chat',
+      'open chat':                     'Abrir chat',
+      'close chat':                    'Cerrar chat',
+      'type your message here...':     'Escribe tu mensaje aquí...',
+      'send message':                  'Enviar mensaje',
+      'please wait until the response is complete': 'Espera a que termine la respuesta',
+      'agent response':                'Respuesta del agente',
+      'agent is thinking':             'El agente está pensando',
+      'stop viewing':                  'Dejar de ver',
+      'open image':                    'Abrir imagen',
+      'open video':                    'Abrir video',
+
+      /* ---------- Permisos de micrófono y cámara ---------- */
+      "let's get your permission":     'Necesitamos tu permiso',
+      'your browser needs permission to use your microphone.':
+        'Tu navegador necesita permiso para usar el micrófono.',
+      'got a question?':               '¿Tienes una pregunta?',
+      'talk to a live interactive agent, just turn on your mic to start the call.':
+        'Habla con un agente interactivo en vivo: solo enciende el micrófono para iniciar la llamada.',
+      'we are blocked from using your microphone':
+        'El acceso a tu micrófono está bloqueado',
+      "click the page info icon in your browser's address bar":
+        'Haz clic en el ícono de información de la página en la barra de direcciones',
+      'turn on microphone access':     'Permitir acceso al micrófono',
+      'we are blocked from using your camera':
+        'El acceso a tu cámara está bloqueado',
+      'turn on camera access':         'Permitir acceso a la cámara',
+      'camera will be available after generating your agent':
+        'La cámara estará disponible después de generar tu agente',
+
+      /* ---------- Errores y red ---------- */
+      'your network quality is low. this may affect your experience.':
+        'Tu conexión es lenta. Esto puede afectar tu experiencia.',
+      'the agent is temporarily unavailable. please try again later.':
+        'El agente no está disponible por el momento. Inténtalo más tarde.',
+
+      /* ---------- Encuesta de fin de llamada ---------- */
+      'rate your experience':          'Califica tu experiencia',
+      'submit':                        'Enviar',
+      'thanks for your feedback!':     '¡Gracias por tus comentarios!',
+      "couldn't send your feedback. please try again.":
+        'No se pudieron enviar tus comentarios. Inténtalo de nuevo.',
+
+      /* ---------- Etiquetas de accesibilidad ---------- */
+      'control header':                'Encabezado de controles',
+      'main controls':                 'Controles principales',
+      'welcome message':               'Mensaje de bienvenida',
+      'connecting overlay':            'Pantalla de conexión',
+      'agent idle video':              'Video del agente en espera',
+      'agent video stream':            'Video del agente en vivo',
+
+      // Quita esta línea si prefieres conservar el distintivo "AI"
+      'ai':                            'IA',
+    };
+
+    const ATRIBUTOS = ['placeholder', 'aria-label', 'title', 'alt'];
+
+    function traducir(txt) {
+      if (!txt) return null;
+      return TRADUCCIONES[txt.trim().toLowerCase()] || null;
+    }
+
+    /* ==================================================================
+       Traduce un árbol (documento o shadow root)
+    ================================================================== */
+    function traducirArbol(root) {
+      if (!root) return;
+
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let nodo;
+      while ((nodo = walker.nextNode())) {
+        const es = traducir(nodo.textContent);
+        if (es && nodo.textContent.trim() !== es) nodo.textContent = es;
+      }
+
+      if (!root.querySelectorAll) return;
+
+      root.querySelectorAll('*').forEach(el => {
+        ATRIBUTOS.forEach(attr => {
+          const val = el.getAttribute && el.getAttribute(attr);
+          if (!val) return;
+          const es = traducir(val);
+          if (!es || es === val) return;
+          // Guardamos el original en inglés para poder ubicar botones
+          // por su identidad real aunque ya estén traducidos.
+          if (!el.dataset.enOriginal) el.dataset.enOriginal = val.trim().toLowerCase();
+          el.setAttribute(attr, es);
+        });
+      });
+    }
+
+    /* ==================================================================
+       Recorre el documento y TODOS los shadow roots.
+       Clave: un MutationObserver sobre document.body NO detecta cambios
+       dentro de un shadow root, así que hay que observar cada uno.
+    ================================================================== */
+    const observados = new WeakSet();
+    let aplicando = false;
+    let pendiente = null;
+
+    function programar() {
+      if (aplicando) return;
+      clearTimeout(pendiente);
+      pendiente = setTimeout(aplicar, 60);
+    }
+
+    const observer = new MutationObserver(programar);
+    const OPCIONES = {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ATRIBUTOS,
+    };
+
+    function recorrer(root) {
+      if (!root) return;
+      traducirArbol(root);
+
+      if (!observados.has(root)) {
+        observados.add(root);
+        observer.observe(root, OPCIONES);
+      }
+
+      if (!root.querySelectorAll) return;
+      root.querySelectorAll('*').forEach(el => {
+        if (el.shadowRoot) recorrer(el.shadowRoot);
+      });
+    }
+
+    function aplicar() {
+      aplicando = true;
+      try { recorrer(document.body); } catch (e) { /* silencio */ }
+      // Los callbacks del observer son microtareas; este setTimeout(0)
+      // corre después, liberando el candado sin generar bucle infinito.
+      setTimeout(() => { aplicando = false; }, 0);
+    }
+
+    function iniciar() {
+      aplicar();
+      setInterval(aplicar, 1500); // red de seguridad: el widget monta tarde
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', iniciar);
+    } else {
+      iniciar();
+    }
+
+    /* ==================================================================
+       Botón "Terminar" propio
+    ================================================================== */
+    function buscarBotonFin(root) {
+      if (!root || !root.querySelectorAll) return null;
+
+      for (const btn of root.querySelectorAll('button, [role="button"]')) {
+        const original = btn.dataset ? btn.dataset.enOriginal : '';
+        const label = (btn.getAttribute('aria-label') || '').trim().toLowerCase();
+        const texto = (btn.textContent || '').trim().toLowerCase();
+
+        if (original === 'end call') return btn;
+        if (label === 'end call' || label === 'terminar llamada') return btn;
+        if (texto === 'end call' || texto === 'terminar llamada') return btn;
+      }
+
+      for (const el of root.querySelectorAll('*')) {
+        if (el.shadowRoot) {
+          const hallado = buscarBotonFin(el.shadowRoot);
+          if (hallado) return hallado;
+        }
+      }
+      return null;
+    }
+
+    document.getElementById('btn-terminar').addEventListener('click', () => {
+      const btn = buscarBotonFin(document.body);
+      if (btn) {
+        btn.click();
+      } else {
+        const agent = document.querySelector('did-agent');
+        if (agent && agent.disconnect) agent.disconnect();
+        location.reload();
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      const a = document.querySelector('did-agent');
+      if (a && a.disconnect) a.disconnect();
+    });
+  })();
+  </script>
+
+</body>
+</html>
