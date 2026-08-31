@@ -6,7 +6,10 @@
   <title>Agente D-ID</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
     #did-agent-container { width: 100%; height: 100%; }
 
     #btn-terminar {
@@ -26,6 +29,44 @@
       transition: opacity 0.2s;
     }
     #btn-terminar:hover { opacity: 1; }
+
+    /* ---------- Indicador del agente activo ---------- */
+    #badge-agente {
+      position: fixed;
+      top: 10px;
+      right: 14px;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 11px;
+      line-height: 1.4;
+      backdrop-filter: blur(4px);
+      opacity: 0.55;
+      transition: opacity 0.2s;
+      font-variant-numeric: tabular-nums;
+    }
+    #badge-agente:hover { opacity: 1; }
+    #badge-agente[hidden] { display: none; }
+    #badge-agente code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      opacity: 0.75;
+    }
+    #badge-agente button {
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    #badge-agente button:hover { background: rgba(255, 255, 255, 0.32); }
   </style>
 </head>
 <body>
@@ -34,20 +75,132 @@
 
   <button id="btn-terminar" title="Terminar conversación">✕ Terminar</button>
 
-  <script
-    type="module"
-    src="https://agent.d-id.com/v2/index.js"
-    data-mode="full"
-    data-client-key="ck_Y6Dqt6YNh3tpL9E-SAZ_m"
-    data-agent-id="v2_agt_noml6Z11"
-    data-name="did-agent"
-    data-monitor="true"
-    data-target-id="did-agent-container">
-  </script>
+  <div id="badge-agente" hidden>
+    <span id="badge-nombre"></span>
+    <code id="badge-id"></code>
+    <button id="btn-siguiente" type="button">Siguiente</button>
+  </div>
 
   <script>
   (function () {
     'use strict';
+
+    /* ==================================================================
+       LOS TRES AGENTES
+
+       Cada refresco de la página carga el siguiente de la lista, en
+       orden y en ciclo: 1 → 2 → 3 → 1 → …
+
+       Se usa rotación en secuencia y no selección aleatoria porque el
+       azar puede devolver el mismo agente dos veces seguidas, que es
+       justo lo que se quiere evitar; además la rotación reparte la
+       carga por igual entre los tres.
+
+       Para forzar uno concreto sin romper el ciclo:
+         ?agente=1   ?agente=2   ?agente=3
+    ================================================================== */
+    const AGENTES = [
+      {
+        nombre: 'Agente 1',
+        agentId:   'v2_agt_noml6Z11',
+        clientKey: 'ck_Y6Dqt6YNh3tpL9E-SAZ_m',
+      },
+      {
+        nombre: 'Agente 2',
+        agentId:   'v2_agt_uyYPGrAH',
+        clientKey: 'ck_iKBjuqf-sIxUUShgAsXIO',
+      },
+      {
+        nombre: 'Agente 3',
+        agentId:   'REEMPLAZAR_AGENT_ID_3',
+        clientKey: 'REEMPLAZAR_CLIENT_KEY_3',
+      },
+    ];
+
+    const CLAVE_ALMACEN = 'did-agente-indice';
+
+    const badge       = document.getElementById('badge-agente');
+    const badgeNombre = document.getElementById('badge-nombre');
+    const badgeId     = document.getElementById('badge-id');
+    const btnSiguiente = document.getElementById('btn-siguiente');
+    const btnTerminar  = document.getElementById('btn-terminar');
+
+    /* ------------------------------------------------------------------
+       Selección del agente.
+
+       El índice del último usado se guarda en localStorage. Si el
+       navegador lo bloquea (modo privado, iframe con restricciones,
+       vista previa), se cae a selección aleatoria: pierde la garantía
+       de no repetir, pero la página sigue funcionando.
+    ------------------------------------------------------------------ */
+    function leerUltimoIndice() {
+      try {
+        const v = window.localStorage.getItem(CLAVE_ALMACEN);
+        const n = parseInt(v, 10);
+        return Number.isInteger(n) ? n : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function guardarIndice(i) {
+      try {
+        window.localStorage.setItem(CLAVE_ALMACEN, String(i));
+      } catch (e) {
+        /* almacenamiento no disponible: se ignora */
+      }
+    }
+
+    function elegirIndice() {
+      // 1. Forzado por URL
+      const forzado = parseInt(new URLSearchParams(location.search).get('agente'), 10);
+      if (Number.isInteger(forzado) && forzado >= 1 && forzado <= AGENTES.length) {
+        return forzado - 1;
+      }
+
+      // 2. Rotación en secuencia
+      const ultimo = leerUltimoIndice();
+      if (ultimo !== null) {
+        return (ultimo + 1) % AGENTES.length;
+      }
+
+      // 3. Sin almacenamiento: aleatorio
+      return Math.floor(Math.random() * AGENTES.length);
+    }
+
+    /* ------------------------------------------------------------------
+       Inyección del embed.
+
+       El widget de D-ID lee sus atributos data-* en el momento en que
+       el script se ejecuta, así que la etiqueta no puede ir estática en
+       el HTML: hay que crearla ya con los valores del agente elegido.
+    ------------------------------------------------------------------ */
+    function inyectarAgente(cfg) {
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src  = 'https://agent.d-id.com/v2/index.js';
+      s.setAttribute('data-mode', 'full');
+      s.setAttribute('data-client-key', cfg.clientKey);
+      s.setAttribute('data-agent-id', cfg.agentId);
+      s.setAttribute('data-name', 'did-agent');
+      s.setAttribute('data-monitor', 'true');
+      s.setAttribute('data-target-id', 'did-agent-container');
+      document.body.appendChild(s);
+
+      badgeNombre.textContent = cfg.nombre;
+      badgeId.textContent = cfg.agentId;
+      badge.hidden = false;
+
+      iniciarTraduccion();
+    }
+
+    btnSiguiente.addEventListener('click', () => {
+      // Basta con recargar: el ciclo avanza solo. Se limpia el forzado
+      // por URL para no quedar clavado en el mismo agente.
+      const url = new URL(location.href);
+      url.searchParams.delete('agente');
+      location.href = url.toString();
+    });
 
     /* ==================================================================
        Diccionario completo del embed D-ID v2 (build 2.1.27).
@@ -189,6 +342,9 @@
        Recorre el documento y TODOS los shadow roots.
        Clave: un MutationObserver sobre document.body NO detecta cambios
        dentro de un shadow root, así que hay que observar cada uno.
+
+       El indicador se excluye: ya está en español y no hay razón de
+       recorrerlo en cada pasada.
     ================================================================== */
     const observados = new WeakSet();
     let aplicando = false;
@@ -211,6 +367,7 @@
 
     function recorrer(root) {
       if (!root) return;
+      if (root === badge) return;
       traducirArbol(root);
 
       if (!observados.has(root)) {
@@ -232,15 +389,12 @@
       setTimeout(() => { aplicando = false; }, 0);
     }
 
-    function iniciar() {
+    let traduccionIniciada = false;
+    function iniciarTraduccion() {
+      if (traduccionIniciada) return;
+      traduccionIniciada = true;
       aplicar();
       setInterval(aplicar, 1500); // red de seguridad: el widget monta tarde
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', iniciar);
-    } else {
-      iniciar();
     }
 
     /* ==================================================================
@@ -268,7 +422,7 @@
       return null;
     }
 
-    document.getElementById('btn-terminar').addEventListener('click', () => {
+    btnTerminar.addEventListener('click', () => {
       const btn = buscarBotonFin(document.body);
       if (btn) {
         btn.click();
@@ -283,6 +437,21 @@
       const a = document.querySelector('did-agent');
       if (a && a.disconnect) a.disconnect();
     });
+
+    /* ==================================================================
+       Arranque
+    ================================================================== */
+    function arrancar() {
+      const i = elegirIndice();
+      guardarIndice(i);
+      inyectarAgente(AGENTES[i]);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', arrancar);
+    } else {
+      arrancar();
+    }
   })();
   </script>
 
