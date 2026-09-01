@@ -78,25 +78,104 @@
       }
     });
 
-    // Traducciones
+    /* ==================================================================
+       Diccionario completo del embed D-ID v2 (build 2.1.27).
+       Las llaves son las cadenas EXACTAS del bundle, en minúsculas.
+       El widget solo trae inglés y alemán de fábrica: no existe opción
+       de configuración para español, por eso se parchea el DOM.
+    ================================================================== */
     const TRADUCCIONES = {
-      'start conversation':     'Iniciar',
-      'connecting':             'Conectando...',
-      'type your message here': 'Escribe tu mensaje aquí',
-      'type your message':      'Escribe tu mensaje',
-      'send':                   'Enviar',
-      'end conversation':       'Terminar conversación',
-      'end':                    'Terminar',
-      'microphone':             'Micrófono',
-      'mute':                   'Silenciar',
-      'unmute':                 'Activar audio',
-      'chat':                   'Chat',
-      'reconnecting':           'Reconectando...',
-      'something went wrong':   'Algo salió mal',
-      'try again':              'Intentar de nuevo',
-      'loading':                'Cargando...',
-      'close':                  'Cerrar',
-      'open chat':              'Abrir chat',
+
+      /* ---------- Arranque / conexión ---------- */
+      'start call':                    'Iniciar llamada',
+      'starting...':                   'Iniciando...',
+      'connecting...':                 'Conectando...',
+      'loading...':                    'Cargando...',
+      'hang tight':                    'Un momento',
+      'reconnect':                     'Reconectar',
+      'continue call...':              'Continuar llamada...',
+      "let's continue":                'Continuemos',
+      'create new call':               'Crear nueva llamada',
+      'start a new call':              'Iniciar una nueva llamada',
+      'want to continue where we left off?': '¿Quieres continuar donde nos quedamos?',
+      'are you still here?':           '¿Sigues ahí?',
+      'call ended':                    'Llamada finalizada',
+      'understood':                    'Entendido',
+      'skip':                          'Omitir',
+      'close':                         'Cerrar',
+
+      /* ---------- Controles de llamada ---------- */
+      'end call':                      'Terminar llamada',
+      'turn microphone on':            'Encender micrófono',
+      'mute microphone':               'Silenciar micrófono',
+      'unmute microphone':             'Activar micrófono',
+      'turn off speakers':             'Apagar bocinas',
+      'turn on captions':              'Activar subtítulos',
+      'turn off captions':             'Desactivar subtítulos',
+      'expand menu':                   'Abrir menú',
+      'collapse menu':                 'Cerrar menú',
+      'select audio device':           'Seleccionar dispositivo de audio',
+      'microphone':                    'Micrófono',
+      'speakers':                      'Bocinas',
+      'camera':                        'Cámara',
+      'talk to interrupt':             'Habla para interrumpir',
+
+      /* ---------- Chat ---------- */
+      'chat':                          'Chat',
+      'chat history':                  'Historial de chat',
+      'chat messages':                 'Mensajes del chat',
+      'open chat':                     'Abrir chat',
+      'close chat':                    'Cerrar chat',
+      'type your message here...':     'Escribe tu mensaje aquí...',
+      'send message':                  'Enviar mensaje',
+      'please wait until the response is complete': 'Espera a que termine la respuesta',
+      'agent response':                'Respuesta del agente',
+      'agent is thinking':             'El agente está pensando',
+      'stop viewing':                  'Dejar de ver',
+      'open image':                    'Abrir imagen',
+      'open video':                    'Abrir video',
+
+      /* ---------- Permisos de micrófono y cámara ---------- */
+      "let's get your permission":     'Necesitamos tu permiso',
+      'your browser needs permission to use your microphone.':
+        'Tu navegador necesita permiso para usar el micrófono.',
+      'got a question?':               '¿Tienes una pregunta?',
+      'talk to a live interactive agent, just turn on your mic to start the call.':
+        'Habla con un agente interactivo en vivo: solo enciende el micrófono para iniciar la llamada.',
+      'we are blocked from using your microphone':
+        'El acceso a tu micrófono está bloqueado',
+      "click the page info icon in your browser's address bar":
+        'Haz clic en el ícono de información de la página en la barra de direcciones',
+      'turn on microphone access':     'Permitir acceso al micrófono',
+      'we are blocked from using your camera':
+        'El acceso a tu cámara está bloqueado',
+      'turn on camera access':         'Permitir acceso a la cámara',
+      'camera will be available after generating your agent':
+        'La cámara estará disponible después de generar tu agente',
+
+      /* ---------- Errores y red ---------- */
+      'your network quality is low. this may affect your experience.':
+        'Tu conexión es lenta. Esto puede afectar tu experiencia.',
+      'the agent is temporarily unavailable. please try again later.':
+        'El agente no está disponible por el momento. Inténtalo más tarde.',
+
+      /* ---------- Encuesta de fin de llamada ---------- */
+      'rate your experience':          'Califica tu experiencia',
+      'submit':                        'Enviar',
+      'thanks for your feedback!':     '¡Gracias por tus comentarios!',
+      "couldn't send your feedback. please try again.":
+        'No se pudieron enviar tus comentarios. Inténtalo de nuevo.',
+
+      /* ---------- Etiquetas de accesibilidad ---------- */
+      'control header':                'Encabezado de controles',
+      'main controls':                 'Controles principales',
+      'welcome message':               'Mensaje de bienvenida',
+      'connecting overlay':            'Pantalla de conexión',
+      'agent idle video':              'Video del agente en espera',
+      'agent video stream':            'Video del agente en vivo',
+
+      // Quita esta línea si prefieres conservar el distintivo "AI"
+      'ai':                            'IA',
     };
 
     function traducirArbol(root) {
