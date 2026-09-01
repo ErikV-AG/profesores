@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>D-ID Agent</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    #did-agent-container { width: 100%; height: 100%; }
+
+    #btn-terminar {
+      position: fixed;
+      top: 10px;
+      left: 14px;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    #btn-terminar:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <div id="did-agent-container"></div>
+
+  <button id="btn-terminar" title="Terminar conversación">✕ Terminar</button>
+
+  <script
+    type="module"
+    src="https://agent.d-id.com/v2/index.js"
+    data-mode="full"
+    data-client-key="ck_COIwBrYiMGo0M8gQfndRK"
+    data-agent-id="v2_agt_0SC_rwW1"
+    data-name="did-agent"
+    data-monitor="true"
+    data-target-id="did-agent-container">
+  </script>
+
+  <script>
+    // Botón terminar
+    document.getElementById('btn-terminar').addEventListener('click', () => {
+      function encontrarEnd(root) {
+        if (!root) return null;
+        if (root.querySelectorAll) {
+          const btns = root.querySelectorAll('button, [role="button"]');
+          for (const btn of btns) {
+            const txt = btn.textContent.trim().toLowerCase();
+            if (txt === 'end' || txt === 'terminar' || txt.includes('end conversation')) {
+              return btn;
+            }
+          }
+          for (const el of root.querySelectorAll('*')) {
+            if (el.shadowRoot) {
+              const found = encontrarEnd(el.shadowRoot);
+              if (found) return found;
+            }
+          }
+        }
+        return null;
+      }
+
+      const endBtn = encontrarEnd(document.body);
+      if (endBtn) {
+        endBtn.click();
+      } else {
+        const agent = document.querySelector('did-agent');
+        if (agent && agent.disconnect) agent.disconnect();
+        location.reload();
+      }
+    });
+
+    /* ==================================================================
+       Diccionario completo del embed D-ID v2 (build 2.1.27).
+       Las llaves son las cadenas EXACTAS del bundle, en minúsculas.
+       El widget solo trae inglés y alemán de fábrica: no existe opción
+       de configuración para español, por eso se parchea el DOM.
+    ================================================================== */
+    const TRADUCCIONES = {
+
+      /* ---------- Arranque / conexión ---------- */
+      'start call':                    'Iniciar llamada',
+      'starting...':                   'Iniciando...',
+      'connecting...':                 'Conectando...',
+      'loading...':                    'Cargando...',
+      'hang tight':                    'Un momento',
+      'reconnect':                     'Reconectar',
+      'continue call...':              'Continuar llamada...',
+      "let's continue":                'Continuemos',
+      'create new call':               'Crear nueva llamada',
+      'start a new call':              'Iniciar una nueva llamada',
+      'want to continue where we left off?': '¿Quieres continuar donde nos quedamos?',
+      'are you still here?':           '¿Sigues ahí?',
+      'call ended':                    'Llamada finalizada',
+      'understood':                    'Entendido',
+      'skip':                          'Omitir',
+      'close':                         'Cerrar',
+
+      /* ---------- Controles de llamada ---------- */
+      'end call':                      'Terminar llamada',
+      'turn microphone on':            'Encender micrófono',
+      'mute microphone':               'Silenciar micrófono',
+      'unmute microphone':             'Activar micrófono',
+      'turn off speakers':             'Apagar bocinas',
+      'turn on captions':              'Activar subtítulos',
+      'turn off captions':             'Desactivar subtítulos',
+      'expand menu':                   'Abrir menú',
+      'collapse menu':                 'Cerrar menú',
+      'select audio device':           'Seleccionar dispositivo de audio',
+      'microphone':                    'Micrófono',
+      'speakers':                      'Bocinas',
+      'camera':                        'Cámara',
+      'talk to interrupt':             'Habla para interrumpir',
+
+      /* ---------- Chat ---------- */
+      'chat':                          'Chat',
+      'chat history':                  'Historial de chat',
+      'chat messages':                 'Mensajes del chat',
+      'open chat':                     'Abrir chat',
+      'close chat':                    'Cerrar chat',
+      'type your message here...':     'Escribe tu mensaje aquí...',
+      'send message':                  'Enviar mensaje',
+      'please wait until the response is complete': 'Espera a que termine la respuesta',
+      'agent response':                'Respuesta del agente',
+      'agent is thinking':             'El agente está pensando',
+      'stop viewing':                  'Dejar de ver',
+      'open image':                    'Abrir imagen',
+      'open video':                    'Abrir video',
+
+      /* ---------- Permisos de micrófono y cámara ---------- */
+      "let's get your permission":     'Necesitamos tu permiso',
+      'your browser needs permission to use your microphone.':
+        'Tu navegador necesita permiso para usar el micrófono.',
+      'got a question?':               '¿Tienes una pregunta?',
+      'talk to a live interactive agent, just turn on your mic to start the call.':
+        'Habla con un agente interactivo en vivo: solo enciende el micrófono para iniciar la llamada.',
+      'we are blocked from using your microphone':
+        'El acceso a tu micrófono está bloqueado',
+      "click the page info icon in your browser's address bar":
+        'Haz clic en el ícono de información de la página en la barra de direcciones',
+      'turn on microphone access':     'Permitir acceso al micrófono',
+      'we are blocked from using your camera':
+        'El acceso a tu cámara está bloqueado',
+      'turn on camera access':         'Permitir acceso a la cámara',
+      'camera will be available after generating your agent':
+        'La cámara estará disponible después de generar tu agente',
+
+      /* ---------- Errores y red ---------- */
+      'your network quality is low. this may affect your experience.':
+        'Tu conexión es lenta. Esto puede afectar tu experiencia.',
+      'the agent is temporarily unavailable. please try again later.':
+        'El agente no está disponible por el momento. Inténtalo más tarde.',
+
+      /* ---------- Encuesta de fin de llamada ---------- */
+      'rate your experience':          'Califica tu experiencia',
+      'submit':                        'Enviar',
+      'thanks for your feedback!':     '¡Gracias por tus comentarios!',
+      "couldn't send your feedback. please try again.":
+        'No se pudieron enviar tus comentarios. Inténtalo de nuevo.',
+
+      /* ---------- Etiquetas de accesibilidad ---------- */
+      'control header':                'Encabezado de controles',
+      'main controls':                 'Controles principales',
+      'welcome message':               'Mensaje de bienvenida',
+      'connecting overlay':            'Pantalla de conexión',
+      'agent idle video':              'Video del agente en espera',
+      'agent video stream':            'Video del agente en vivo',
+
+      // Quita esta línea si prefieres conservar el distintivo "AI"
+      'ai':                            'IA',
+    };
+
+    function traducirArbol(root) {
+      if (!root) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let nodo;
+      while ((nodo = walker.nextNode())) {
+        const lower = nodo.textContent.trim().toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower === en) { nodo.textContent = es; break; }
+        }
+      }
+      if (!root.querySelectorAll) return;
+      root.querySelectorAll('[placeholder]').forEach(el => {
+        const lower = el.placeholder.toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower.includes(en)) { el.placeholder = es; break; }
+        }
+      });
+      root.querySelectorAll('[aria-label]').forEach(el => {
+        const lower = el.getAttribute('aria-label').toLowerCase();
+        for (const [en, es] of Object.entries(TRADUCCIONES)) {
+          if (lower.includes(en)) { el.setAttribute('aria-label', es); break; }
+        }
+      });
+      root.querySelectorAll('*').forEach(el => {
+        if (el.shadowRoot) traducirArbol(el.shadowRoot);
+      });
+    }
+
+    window.addEventListener('load', () => {
+      traducirArbol(document.body);
+      new MutationObserver(() => traducirArbol(document.body))
+        .observe(document.body, { childList: true, subtree: true });
+      let i = 20;
+      const t = setInterval(() => { traducirArbol(document.body); if (!--i) clearInterval(t); }, 1000);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      const a = document.querySelector('did-agent');
+      if (a && a.disconnect) a.disconnect();
+    });
+  </script>
+
+</body>
+</html>
