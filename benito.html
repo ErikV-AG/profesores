@@ -12,24 +12,6 @@
     }
     #did-agent-container { width: 100%; height: 100%; }
 
-    #btn-terminar {
-      position: fixed;
-      top: 10px;
-      left: 14px;
-      z-index: 9999;
-      background: rgba(0, 0, 0, 0.45);
-      color: #fff;
-      border: none;
-      border-radius: 20px;
-      padding: 5px 12px;
-      font-size: 12px;
-      cursor: pointer;
-      backdrop-filter: blur(4px);
-      opacity: 0.7;
-      transition: opacity 0.2s;
-    }
-    #btn-terminar:hover { opacity: 1; }
-
     /* ---------- Indicador del agente activo ---------- */
     #badge-agente {
       position: fixed;
@@ -48,15 +30,9 @@
       backdrop-filter: blur(4px);
       opacity: 0.55;
       transition: opacity 0.2s;
-      font-variant-numeric: tabular-nums;
     }
     #badge-agente:hover { opacity: 1; }
     #badge-agente[hidden] { display: none; }
-    #badge-agente code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 11px;
-      opacity: 0.75;
-    }
     #badge-agente button {
       background: rgba(255, 255, 255, 0.18);
       color: #fff;
@@ -73,12 +49,9 @@
 
   <div id="did-agent-container"></div>
 
-  <button id="btn-terminar" title="Terminar conversación">✕ Terminar</button>
-
   <div id="badge-agente" hidden>
     <span id="badge-nombre"></span>
-    <code id="badge-id"></code>
-    <button id="btn-siguiente" type="button">Siguiente</button>
+    <button id="btn-siguiente" type="button">Cambiar</button>
   </div>
 
   <script>
@@ -86,44 +59,37 @@
     'use strict';
 
     /* ==================================================================
-       LOS TRES AGENTES
+       LOS DOS AGENTES
 
        Cada refresco de la página carga el siguiente de la lista, en
-       orden y en ciclo: 1 → 2 → 3 → 1 → …
+       orden y en ciclo: Joven → Maduro → Joven → …
 
        Se usa rotación en secuencia y no selección aleatoria porque el
        azar puede devolver el mismo agente dos veces seguidas, que es
        justo lo que se quiere evitar; además la rotación reparte la
-       carga por igual entre los tres.
+       carga por igual entre ambos.
 
        Para forzar uno concreto sin romper el ciclo:
-         ?agente=1   ?agente=2   ?agente=3
+         ?agente=1   (Joven)      ?agente=2   (Maduro)
     ================================================================== */
     const AGENTES = [
       {
-        nombre: 'Agente 1',
+        nombre: 'Joven',
+        agentId:   'v2_agt_KdKngG8J',
+        clientKey: 'ck_KiN5IUyNC2E1L3ggPVADQ',
+      },
+      {
+        nombre: 'Maduro',
         agentId:   'v2_agt_noml6Z11',
         clientKey: 'ck_Y6Dqt6YNh3tpL9E-SAZ_m',
-      },
-      {
-        nombre: 'Agente 2',
-        agentId:   'v2_agt_uyYPGrAH',
-        clientKey: 'ck_iKBjuqf-sIxUUShgAsXIO',
-      },
-      {
-        nombre: 'Agente 3',
-        agentId:   'v2_agt_0roMzJ4Z',
-        clientKey: 'ck_6Cj0ZlvgzVW1F_jONPbNA',
       },
     ];
 
     const CLAVE_ALMACEN = 'did-agente-indice';
 
-    const badge       = document.getElementById('badge-agente');
-    const badgeNombre = document.getElementById('badge-nombre');
-    const badgeId     = document.getElementById('badge-id');
+    const badge        = document.getElementById('badge-agente');
+    const badgeNombre  = document.getElementById('badge-nombre');
     const btnSiguiente = document.getElementById('btn-siguiente');
-    const btnTerminar  = document.getElementById('btn-terminar');
 
     /* ------------------------------------------------------------------
        Selección del agente.
@@ -188,7 +154,6 @@
       document.body.appendChild(s);
 
       badgeNombre.textContent = cfg.nombre;
-      badgeId.textContent = cfg.agentId;
       badge.hidden = false;
 
       iniciarTraduccion();
@@ -207,29 +172,31 @@
        Las llaves son las cadenas EXACTAS del bundle, en minúsculas.
        El widget solo trae inglés y alemán de fábrica: no existe opción
        de configuración para español, por eso se parchea el DOM.
+
+       "call" se traduce siempre como "conversación", no como "llamada".
     ================================================================== */
     const TRADUCCIONES = {
 
       /* ---------- Arranque / conexión ---------- */
-      'start call':                    'Iniciar llamada',
+      'start call':                    'Iniciar conversación',
       'starting...':                   'Iniciando...',
       'connecting...':                 'Conectando...',
       'loading...':                    'Cargando...',
       'hang tight':                    'Un momento',
       'reconnect':                     'Reconectar',
-      'continue call...':              'Continuar llamada...',
+      'continue call...':              'Continuar conversación...',
       "let's continue":                'Continuemos',
-      'create new call':               'Crear nueva llamada',
-      'start a new call':              'Iniciar una nueva llamada',
+      'create new call':               'Crear nueva conversación',
+      'start a new call':              'Iniciar una nueva conversación',
       'want to continue where we left off?': '¿Quieres continuar donde nos quedamos?',
       'are you still here?':           '¿Sigues ahí?',
-      'call ended':                    'Llamada finalizada',
+      'call ended':                    'Conversación finalizada',
       'understood':                    'Entendido',
       'skip':                          'Omitir',
       'close':                         'Cerrar',
 
-      /* ---------- Controles de llamada ---------- */
-      'end call':                      'Terminar llamada',
+      /* ---------- Controles de conversación ---------- */
+      'end call':                      'Terminar conversación',
       'turn microphone on':            'Encender micrófono',
       'mute microphone':               'Silenciar micrófono',
       'unmute microphone':             'Activar micrófono',
@@ -265,7 +232,7 @@
         'Tu navegador necesita permiso para usar el micrófono.',
       'got a question?':               '¿Tienes una pregunta?',
       'talk to a live interactive agent, just turn on your mic to start the call.':
-        'Habla con un agente interactivo en vivo: solo enciende el micrófono para iniciar la llamada.',
+        'Habla con un agente interactivo en vivo: solo enciende el micrófono para iniciar la conversación.',
       'we are blocked from using your microphone':
         'El acceso a tu micrófono está bloqueado',
       "click the page info icon in your browser's address bar":
@@ -283,7 +250,7 @@
       'the agent is temporarily unavailable. please try again later.':
         'El agente no está disponible por el momento. Inténtalo más tarde.',
 
-      /* ---------- Encuesta de fin de llamada ---------- */
+      /* ---------- Encuesta de fin de conversación ---------- */
       'rate your experience':          'Califica tu experiencia',
       'submit':                        'Enviar',
       'thanks for your feedback!':     '¡Gracias por tus comentarios!',
@@ -330,9 +297,6 @@
           if (!val) return;
           const es = traducir(val);
           if (!es || es === val) return;
-          // Guardamos el original en inglés para poder ubicar botones
-          // por su identidad real aunque ya estén traducidos.
-          if (!el.dataset.enOriginal) el.dataset.enOriginal = val.trim().toLowerCase();
           el.setAttribute(attr, es);
         });
       });
@@ -398,41 +362,8 @@
     }
 
     /* ==================================================================
-       Botón "Terminar" propio
+       Cierre limpio al salir de la página
     ================================================================== */
-    function buscarBotonFin(root) {
-      if (!root || !root.querySelectorAll) return null;
-
-      for (const btn of root.querySelectorAll('button, [role="button"]')) {
-        const original = btn.dataset ? btn.dataset.enOriginal : '';
-        const label = (btn.getAttribute('aria-label') || '').trim().toLowerCase();
-        const texto = (btn.textContent || '').trim().toLowerCase();
-
-        if (original === 'end call') return btn;
-        if (label === 'end call' || label === 'terminar llamada') return btn;
-        if (texto === 'end call' || texto === 'terminar llamada') return btn;
-      }
-
-      for (const el of root.querySelectorAll('*')) {
-        if (el.shadowRoot) {
-          const hallado = buscarBotonFin(el.shadowRoot);
-          if (hallado) return hallado;
-        }
-      }
-      return null;
-    }
-
-    btnTerminar.addEventListener('click', () => {
-      const btn = buscarBotonFin(document.body);
-      if (btn) {
-        btn.click();
-      } else {
-        const agent = document.querySelector('did-agent');
-        if (agent && agent.disconnect) agent.disconnect();
-        location.reload();
-      }
-    });
-
     window.addEventListener('beforeunload', () => {
       const a = document.querySelector('did-agent');
       if (a && a.disconnect) a.disconnect();
