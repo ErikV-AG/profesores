@@ -8,11 +8,68 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%; height: 100%; overflow: hidden;
+      background: #000;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     }
     #did-agent-container { width: 100%; height: 100%; }
 
-    /* ---------- Indicador del agente activo ---------- */
+    /* ================= Introducción en video ================= */
+    #intro {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: #000;
+      overflow: hidden;
+      opacity: 1;
+      transition: opacity 0.6s ease;
+    }
+    #intro.saliendo { opacity: 0; }
+
+    /* El iframe se agranda hasta cubrir la pantalla y se recorta por
+       los lados o por arriba y abajo, según la forma de la ventana.
+       Es el equivalente de object-fit: cover, que no aplica a iframes. */
+    #intro iframe {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100vw;
+      height: 56.25vw;      /* 16:9 */
+      min-width: 177.78vh;  /* 16:9 */
+      min-height: 100vh;
+      border: 0;
+      pointer-events: none;
+    }
+
+    /* Capa transparente sobre el iframe: sin ella, los clics se los
+       queda el reproductor de Vimeo y nunca llegan a la página. */
+    #intro-capa {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+    }
+
+    .intro-btn {
+      position: absolute;
+      z-index: 2;
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      opacity: 0.75;
+      transition: opacity 0.2s;
+    }
+    .intro-btn:hover { opacity: 1; }
+    .intro-btn[hidden] { display: none; }
+
+    #btn-sonido  { bottom: 24px; left: 24px; }
+    #btn-omitir  { bottom: 24px; right: 24px; }
+
+    /* ================= Indicador del agente activo ================= */
     #badge-agente {
       position: fixed;
       top: 10px;
@@ -54,6 +111,13 @@
     <button id="btn-siguiente" type="button">Cambiar</button>
   </div>
 
+  <div id="intro" hidden>
+    <div id="intro-capa"></div>
+    <button id="btn-sonido" class="intro-btn" type="button">🔊 Activar sonido</button>
+    <button id="btn-omitir" class="intro-btn" type="button">Omitir introducción ›</button>
+  </div>
+
+  <script src="https://player.vimeo.com/api/player.js"></script>
   <script>
   (function () {
     'use strict';
@@ -85,11 +149,28 @@
       },
     ];
 
+    /* ==================================================================
+       VIDEO DE INTRODUCCIÓN
+       Para cambiarlo basta con el número del video en Vimeo.
+       Se omite con ?intro=0 en la dirección.
+    ================================================================== */
+    const VIDEO_INTRO   = '1224466657';
+    const DURACION_TOPE = 5 * 60 * 1000; // corte de seguridad si el
+                                         // evento de fin nunca llega
+
     const CLAVE_ALMACEN = 'did-agente-indice';
+    const CLAVE_INTRO   = 'did-saltar-intro';
 
     const badge        = document.getElementById('badge-agente');
     const badgeNombre  = document.getElementById('badge-nombre');
     const btnSiguiente = document.getElementById('btn-siguiente');
+
+    const intro      = document.getElementById('intro');
+    const introCapa  = document.getElementById('intro-capa');
+    const btnSonido  = document.getElementById('btn-sonido');
+    const btnOmitir  = document.getElementById('btn-omitir');
+
+    let introActiva = false;
 
     /* ------------------------------------------------------------------
        Selección del agente.
@@ -135,11 +216,39 @@
     }
 
     /* ------------------------------------------------------------------
+       ¿Toca mostrar la introducción?
+
+       No se repite cuando el usuario cambia de agente: ese botón
+       recarga la página, y volver a ver el video completo cada vez
+       sería intolerable. La marca vive en sessionStorage, así que una
+       pestaña nueva o una visita nueva sí ven la introducción.
+    ------------------------------------------------------------------ */
+    function debeMostrarIntro() {
+      if (new URLSearchParams(location.search).get('intro') === '0') return false;
+      try {
+        if (window.sessionStorage.getItem(CLAVE_INTRO) === '1') {
+          window.sessionStorage.removeItem(CLAVE_INTRO);
+          return false;
+        }
+      } catch (e) {
+        /* sin almacenamiento: se muestra siempre */
+      }
+      return true;
+    }
+
+    function marcarSaltoIntro() {
+      try { window.sessionStorage.setItem(CLAVE_INTRO, '1'); } catch (e) {}
+    }
+
+    /* ------------------------------------------------------------------
        Inyección del embed.
 
        El widget de D-ID lee sus atributos data-* en el momento en que
        el script se ejecuta, así que la etiqueta no puede ir estática en
        el HTML: hay que crearla ya con los valores del agente elegido.
+
+       Se inyecta detrás de la introducción, mientras el video corre,
+       para que el agente ya esté montado cuando termine.
     ------------------------------------------------------------------ */
     function inyectarAgente(cfg) {
       const s = document.createElement('script');
@@ -154,7 +263,7 @@
       document.body.appendChild(s);
 
       badgeNombre.textContent = cfg.nombre;
-      badge.hidden = false;
+      badge.hidden = introActiva;
 
       iniciarTraduccion();
     }
@@ -162,10 +271,75 @@
     btnSiguiente.addEventListener('click', () => {
       // Basta con recargar: el ciclo avanza solo. Se limpia el forzado
       // por URL para no quedar clavado en el mismo agente.
+      marcarSaltoIntro();
       const url = new URL(location.href);
       url.searchParams.delete('agente');
       location.href = url.toString();
     });
+
+    /* ==================================================================
+       INTRODUCCIÓN
+
+       El video arranca silenciado porque ningún navegador permite
+       reproducir con sonido sin que el usuario haya tocado la página.
+       Un clic en cualquier parte lo activa.
+    ================================================================== */
+    let player = null;
+    let temporizadorTope = null;
+    let introTerminada = false;
+
+    function montarIntro() {
+      introActiva = true;
+      intro.hidden = false;
+
+      const iframe = document.createElement('iframe');
+      iframe.src =
+        'https://player.vimeo.com/video/' + VIDEO_INTRO +
+        '?badge=0&autopause=0&player_id=0&app_id=58479' +
+        '&autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&playsinline=1';
+      iframe.setAttribute('allow',
+        'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share');
+      iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+      iframe.setAttribute('title', 'Introducción');
+      intro.insertBefore(iframe, introCapa);
+
+      if (window.Vimeo && window.Vimeo.Player) {
+        player = new window.Vimeo.Player(iframe);
+        player.on('ended', terminarIntro);
+        player.on('error', terminarIntro);
+      }
+
+      // Si la interfaz de Vimeo no carga o el evento de fin se pierde,
+      // la introducción no debe dejar la página atorada.
+      temporizadorTope = setTimeout(terminarIntro, DURACION_TOPE);
+    }
+
+    function activarSonido() {
+      btnSonido.hidden = true;
+      if (!player) return;
+      player.setMuted(false)
+        .then(() => player.setVolume(1))
+        .catch(() => { btnSonido.hidden = false; });
+    }
+
+    function terminarIntro() {
+      if (introTerminada) return;
+      introTerminada = true;
+      clearTimeout(temporizadorTope);
+
+      if (player) { try { player.pause(); } catch (e) {} }
+
+      intro.classList.add('saliendo');
+      setTimeout(() => {
+        intro.remove();
+        introActiva = false;
+        badge.hidden = false;
+      }, 600);
+    }
+
+    introCapa.addEventListener('click', activarSonido);
+    btnSonido.addEventListener('click', (e) => { e.stopPropagation(); activarSonido(); });
+    btnOmitir.addEventListener('click', (e) => { e.stopPropagation(); terminarIntro(); });
 
     /* ==================================================================
        Diccionario completo del embed D-ID v2 (build 2.1.27).
@@ -307,8 +481,8 @@
        Clave: un MutationObserver sobre document.body NO detecta cambios
        dentro de un shadow root, así que hay que observar cada uno.
 
-       El indicador se excluye: ya está en español y no hay razón de
-       recorrerlo en cada pasada.
+       El indicador y la introducción se excluyen: ya están en español
+       y no hay razón de recorrerlos en cada pasada.
     ================================================================== */
     const observados = new WeakSet();
     let aplicando = false;
@@ -331,7 +505,7 @@
 
     function recorrer(root) {
       if (!root) return;
-      if (root === badge) return;
+      if (root === badge || root === intro) return;
       traducirArbol(root);
 
       if (!observados.has(root)) {
@@ -373,6 +547,8 @@
        Arranque
     ================================================================== */
     function arrancar() {
+      if (debeMostrarIntro()) montarIntro();
+
       const i = elegirIndice();
       guardarIndice(i);
       inyectarAgente(AGENTES[i]);
