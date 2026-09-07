@@ -49,6 +49,45 @@
       cursor: pointer;
     }
 
+    /* Velo mientras el video espera: da contraste al botón de inicio
+       sobre la miniatura, y se retira al empezar la reproducción. */
+    #intro-capa::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+    #intro.esperando #intro-capa::after { opacity: 1; }
+
+    #btn-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 34px 18px 28px;
+      border: none;
+      border-radius: 44px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #111;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+      transition: transform 0.15s ease, background 0.15s ease, opacity 0.3s ease;
+    }
+    #btn-play:hover  { background: #fff; transform: translate(-50%, -50%) scale(1.04); }
+    #btn-play:active { transform: translate(-50%, -50%) scale(0.98); }
+    #btn-play[hidden] { display: none; }
+    #btn-play svg { display: block; }
+
     .intro-btn {
       position: absolute;
       z-index: 2;
@@ -58,6 +97,7 @@
       border-radius: 20px;
       padding: 8px 16px;
       font-size: 13px;
+      font-family: inherit;
       cursor: pointer;
       backdrop-filter: blur(4px);
       opacity: 0.75;
@@ -66,8 +106,11 @@
     .intro-btn:hover { opacity: 1; }
     .intro-btn[hidden] { display: none; }
 
-    #btn-sonido  { bottom: 24px; left: 24px; }
     #btn-omitir  { bottom: 24px; right: 24px; }
+
+    @media (max-width: 640px) {
+      #btn-play { font-size: 14px; padding: 15px 26px 15px 22px; gap: 11px; }
+    }
 
     /* ================= Indicador del agente activo ================= */
     #badge-agente {
@@ -132,7 +175,13 @@
 
   <div id="intro" hidden>
     <div id="intro-capa"></div>
-    <button id="btn-sonido" class="intro-btn" type="button">🔊 Activar sonido</button>
+    <button id="btn-play" type="button" aria-label="Reproducir introducción">
+      <svg width="22" height="26" viewBox="0 0 22 26" aria-hidden="true">
+        <path d="M2 2.5 L20 13 L2 23.5 Z" fill="currentColor" stroke="currentColor"
+              stroke-width="3" stroke-linejoin="round" />
+      </svg>
+      Ver introducción
+    </button>
     <button id="btn-omitir" class="intro-btn" type="button">Omitir introducción ›</button>
   </div>
 
@@ -189,7 +238,7 @@
 
     const intro      = document.getElementById('intro');
     const introCapa  = document.getElementById('intro-capa');
-    const btnSonido  = document.getElementById('btn-sonido');
+    const btnPlay    = document.getElementById('btn-play');
     const btnOmitir  = document.getElementById('btn-omitir');
 
     let introActiva = false;
@@ -306,24 +355,29 @@
     /* ==================================================================
        INTRODUCCIÓN
 
-       El video arranca silenciado porque ningún navegador permite
-       reproducir con sonido sin que el usuario haya tocado la página.
-       Un clic en cualquier parte lo activa.
+       El video NO arranca solo. Se monta pausado, mostrando su primera
+       imagen, y espera el clic del usuario. Ese clic es lo que permite
+       reproducir con sonido: los navegadores bloquean el audio
+       automático, de modo que el mismo gesto sirve para iniciar y para
+       quitar el silencio. De paso desbloquea el audio de la página para
+       el agente que viene después.
     ================================================================== */
     let player = null;
     let temporizadorTope = null;
     let introTerminada = false;
+    let reproduciendo = false;
 
     function montarIntro() {
       introActiva = true;
       intro.hidden = false;
+      intro.classList.add('esperando');
 
       const iframe = document.createElement('iframe');
       iframe.src =
         'https://player.vimeo.com/video/' + VIDEO_INTRO +
         '?h=' + HASH_INTRO +
         '&badge=0&autopause=0&player_id=0&app_id=58479' +
-        '&autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&playsinline=1';
+        '&autoplay=0&controls=0&title=0&byline=0&portrait=0&playsinline=1';
       iframe.setAttribute('allow',
         'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share');
       iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
@@ -334,19 +388,33 @@
         player = new window.Vimeo.Player(iframe);
         player.on('ended', terminarIntro);
         player.on('error', terminarIntro);
+      } else {
+        // Sin la interfaz de Vimeo no hay manera de ordenar la
+        // reproducción desde aquí; se pasa de largo la introducción
+        // antes que dejar al usuario frente a una imagen fija.
+        terminarIntro();
       }
+    }
+
+    function reproducirIntro() {
+      if (reproduciendo || introTerminada || !player) return;
+      reproduciendo = true;
+
+      btnPlay.hidden = true;
+      intro.classList.remove('esperando');
+
+      player.setMuted(false)
+        .then(() => player.setVolume(1))
+        .then(() => player.play())
+        .catch(() => {
+          // Si el navegador se niega al audio pese al clic, más vale
+          // el video en silencio que ningún video.
+          player.setMuted(true).then(() => player.play()).catch(terminarIntro);
+        });
 
       // Si la interfaz de Vimeo no carga o el evento de fin se pierde,
       // la introducción no debe dejar la página atorada.
       temporizadorTope = setTimeout(terminarIntro, DURACION_TOPE);
-    }
-
-    function activarSonido() {
-      btnSonido.hidden = true;
-      if (!player) return;
-      player.setMuted(false)
-        .then(() => player.setVolume(1))
-        .catch(() => { btnSonido.hidden = false; });
     }
 
     function terminarIntro() {
@@ -364,8 +432,8 @@
       }, 600);
     }
 
-    introCapa.addEventListener('click', activarSonido);
-    btnSonido.addEventListener('click', (e) => { e.stopPropagation(); activarSonido(); });
+    introCapa.addEventListener('click', reproducirIntro);
+    btnPlay.addEventListener('click', (e) => { e.stopPropagation(); reproducirIntro(); });
     btnOmitir.addEventListener('click', (e) => { e.stopPropagation(); terminarIntro(); });
 
     /* ==================================================================
