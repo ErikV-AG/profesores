@@ -72,34 +72,53 @@
     /* ================= Indicador del agente activo ================= */
     #badge-agente {
       position: fixed;
-      top: 10px;
-      right: 14px;
+      top: 14px;
+      right: 16px;
       z-index: 9999;
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(0, 0, 0, 0.45);
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.55);
       color: #fff;
-      border-radius: 20px;
-      padding: 5px 12px;
-      font-size: 11px;
+      border-radius: 24px;
+      padding: 7px 8px 7px 16px;
+      font-size: 13px;
       line-height: 1.4;
-      backdrop-filter: blur(4px);
-      opacity: 0.55;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+      opacity: 0.8;
       transition: opacity 0.2s;
     }
     #badge-agente:hover { opacity: 1; }
     #badge-agente[hidden] { display: none; }
+    #badge-nombre {
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
     #badge-agente button {
-      background: rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.22);
       color: #fff;
       border: none;
-      border-radius: 12px;
-      padding: 2px 8px;
-      font-size: 10px;
+      border-radius: 18px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      white-space: nowrap;
       cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
     }
-    #badge-agente button:hover { background: rgba(255, 255, 255, 0.32); }
+    #badge-agente button:hover { background: rgba(255, 255, 255, 0.36); }
+    #badge-agente button:active { transform: scale(0.96); }
+
+    @media (max-width: 640px) {
+      #badge-agente { font-size: 12px; padding: 6px 7px 6px 13px; gap: 9px; }
+      #badge-agente button { font-size: 12px; padding: 7px 13px; }
+    }
   </style>
 </head>
 <body>
@@ -108,7 +127,7 @@
 
   <div id="badge-agente" hidden>
     <span id="badge-nombre"></span>
-    <button id="btn-siguiente" type="button">Cambiar</button>
+    <button id="btn-siguiente" type="button">⇄</button>
   </div>
 
   <div id="intro" hidden>
@@ -155,6 +174,9 @@
        Se omite con ?intro=0 en la dirección.
     ================================================================== */
     const VIDEO_INTRO   = '1224466657';
+    const HASH_INTRO    = 'aa02d2262e'; // hash de privacidad del video:
+                                        // sin él, un video no listado
+                                        // responde 404 al reproductor
     const DURACION_TOPE = 5 * 60 * 1000; // corte de seguridad si el
                                          // evento de fin nunca llega
 
@@ -263,6 +285,10 @@
       document.body.appendChild(s);
 
       badgeNombre.textContent = cfg.nombre;
+      // El botón anuncia a quién se cambia, no la acción en abstracto:
+      // con dos personajes, decir "Maduro" informa más que "Cambiar".
+      const siguiente = AGENTES[(AGENTES.indexOf(cfg) + 1) % AGENTES.length];
+      btnSiguiente.textContent = '⇄ ' + siguiente.nombre;
       badge.hidden = introActiva;
 
       iniciarTraduccion();
@@ -295,7 +321,8 @@
       const iframe = document.createElement('iframe');
       iframe.src =
         'https://player.vimeo.com/video/' + VIDEO_INTRO +
-        '?badge=0&autopause=0&player_id=0&app_id=58479' +
+        '?h=' + HASH_INTRO +
+        '&badge=0&autopause=0&player_id=0&app_id=58479' +
         '&autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&playsinline=1';
       iframe.setAttribute('allow',
         'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share');
