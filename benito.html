@@ -70,20 +70,21 @@
       z-index: 3;
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 18px 34px 18px 28px;
+      justify-content: center;
+      width: 88px;
+      height: 88px;
+      padding: 0;
+      padding-left: 6px;      /* corrección óptica: el triángulo pesa
+                                 hacia la izquierda dentro del círculo */
       border: none;
-      border-radius: 44px;
+      border-radius: 50%;
       background: rgba(255, 255, 255, 0.92);
       color: #111;
-      font-size: 16px;
-      font-weight: 600;
-      font-family: inherit;
       cursor: pointer;
       box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
       transition: transform 0.15s ease, background 0.15s ease, opacity 0.3s ease;
     }
-    #btn-play:hover  { background: #fff; transform: translate(-50%, -50%) scale(1.04); }
+    #btn-play:hover  { background: #fff; transform: translate(-50%, -50%) scale(1.06); }
     #btn-play:active { transform: translate(-50%, -50%) scale(0.98); }
     #btn-play[hidden] { display: none; }
     #btn-play svg { display: block; }
@@ -109,7 +110,8 @@
     #btn-omitir  { bottom: 24px; right: 24px; }
 
     @media (max-width: 640px) {
-      #btn-play { font-size: 14px; padding: 15px 26px 15px 22px; gap: 11px; }
+      #btn-play { width: 72px; height: 72px; padding-left: 5px; }
+      #btn-play svg { width: 25px; height: 28px; }
     }
 
     /* ================= Indicador del agente activo ================= */
@@ -175,12 +177,11 @@
 
   <div id="intro" hidden>
     <div id="intro-capa"></div>
-    <button id="btn-play" type="button">
-      <svg width="22" height="26" viewBox="0 0 22 26" aria-hidden="true">
+    <button id="btn-play" type="button" aria-label="Reproducir introducción">
+      <svg width="30" height="34" viewBox="0 0 22 26" aria-hidden="true">
         <path d="M2 2.5 L20 13 L2 23.5 Z" fill="currentColor" stroke="currentColor"
               stroke-width="3" stroke-linejoin="round" />
       </svg>
-      Ver introducción
     </button>
     <button id="btn-omitir" class="intro-btn" type="button">Omitir introducción ›</button>
   </div>
