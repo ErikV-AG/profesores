@@ -7,7 +7,14 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; }
+
     #did-agent-container { width: 100%; height: 100%; }
+
+    #elevenlabs-container {
+      width: 100%; height: 100%; display: none;
+      align-items: center; justify-content: center;
+      background: #0f1115;
+    }
 
     #btn-terminar {
       position: fixed;
@@ -26,11 +33,29 @@
       transition: opacity 0.2s;
     }
     #btn-terminar:hover { opacity: 1; }
+
+    /* Aviso breve mientras se hace el cambio de agente */
+    #aviso-cambio {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9998;
+      display: none;
+      align-items: center; justify-content: center;
+      background: #0f1115;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+      text-align: center;
+      padding: 24px;
+    }
   </style>
 </head>
 <body>
 
   <div id="did-agent-container"></div>
+  <div id="elevenlabs-container"></div>
+
+  <div id="aviso-cambio">Cambiando a modo de voz...</div>
 
   <button id="btn-terminar" title="Terminar conversación">✕ Terminar</button>
 
@@ -46,8 +71,128 @@
   </script>
 
   <script>
-    // Botón terminar
+    /* =================================================================
+       ID del agente de ElevenLabs al que se cae cuando D-ID no puede
+       operar en video.
+    ================================================================== */
+    const ELEVENLABS_AGENT_ID = agent_0101m243es8nf93rx65gh1h39nv5;
+
+    /* =================================================================
+       DETECCIÓN DE FALTA DE CRÉDITOS EN D-ID
+
+       Cuando la cuenta de D-ID se queda sin créditos, el widget NO lanza
+       un error HTTP: todas sus peticiones siguen regresando 200 y la
+       pantalla se queda colgada en "Loading...". Lo que sí hace es
+       degradar el agente internamente de video a solo-texto y anunciarlo
+       por su propio emisor de eventos:
+
+           chatMode  ->  { state: "TextOnly" }
+           error     ->  { error: { kind: "ChatModeDowngraded" } }
+
+       Verificado en vivo sobre una página con la cuenta agotada: el
+       evento llega ~11 s después de iniciar la conexión.
+
+       Se escuchan ambos (cualquiera de los dos dispara el cambio) más un
+       respaldo por tiempo, por si en algún escenario ninguno llegara.
+    ================================================================== */
+
+    const TIEMPO_LIMITE_MS = 25000; // respaldo si no llega ningún evento
+    let yaCambio = false;
+    let conectado = false;
+    let temporizador = null;
+
+    function cambiarAElevenLabs(motivo) {
+      if (yaCambio) return;
+      yaCambio = true;
+      clearTimeout(temporizador);
+      console.log('[agente] Cambiando a ElevenLabs. Motivo:', motivo);
+
+      document.getElementById('aviso-cambio').style.display = 'flex';
+
+      // Cerrar la sesión de D-ID para no dejar la conexión abierta.
+      try {
+        const agente = document.querySelector('did-agent');
+        if (agente && agente.disconnect) agente.disconnect();
+      } catch (e) { /* sin consecuencia */ }
+
+      document.getElementById('did-agent-container').style.display = 'none';
+
+      const contenedor = document.getElementById('elevenlabs-container');
+      const widget = document.createElement('elevenlabs-convai');
+      widget.setAttribute('agent-id', ELEVENLABS_AGENT_ID);
+      contenedor.appendChild(widget);
+
+      const script = document.createElement('script');
+      script.src = 'https://elevenlabs.io/convai-widget/index.js';
+      script.async = true;
+      document.body.appendChild(script);
+
+      script.addEventListener('load', () => {
+        document.getElementById('aviso-cambio').style.display = 'none';
+        contenedor.style.display = 'flex';
+      });
+      // Si el script tarda, mostrar de todos modos para no dejar la
+      // pantalla en el aviso indefinidamente.
+      setTimeout(() => {
+        document.getElementById('aviso-cambio').style.display = 'none';
+        contenedor.style.display = 'flex';
+      }, 6000);
+    }
+
+    function engancharEventosDID(api) {
+      api.events.on('error', ({ error }) => {
+        const kind = error && error.kind;
+        console.log('[agente] error D-ID:', kind);
+        if (kind === 'ChatModeDowngraded') {
+          cambiarAElevenLabs('ChatModeDowngraded (sin créditos de video)');
+        }
+      });
+
+      api.events.on('chatMode', ({ state }) => {
+        console.log('[agente] chatMode:', state);
+        // "Functional" es el modo completo con video. Cualquier otro
+        // (TextOnly, Maintenance) significa que el avatar no va a operar.
+        if (state && String(state).toLowerCase() !== 'functional') {
+          cambiarAElevenLabs('chatMode = ' + state);
+        }
+      });
+
+      api.events.on('connection', ({ state }) => {
+        console.log('[agente] conexión:', state);
+        if (state === 'connected') {
+          conectado = true;
+        }
+        if (state === 'fail') {
+          cambiarAElevenLabs('connection = fail');
+        }
+      });
+    }
+
+    // El API global solo existe después de que carga el script del embed.
+    (function esperarAPI() {
+      let intentos = 60; // ~15 s
+      const t = setInterval(() => {
+        if (window.DID_AGENTS_API && window.DID_AGENTS_API.events) {
+          clearInterval(t);
+          engancharEventosDID(window.DID_AGENTS_API);
+        } else if (!--intentos) {
+          clearInterval(t);
+          cambiarAElevenLabs('el embed de D-ID nunca inicializó');
+        }
+      }, 250);
+    })();
+
+    // Respaldo por tiempo: si en 25 s no se logró conectar y tampoco
+    // llegó ningún evento de degradación, se asume que no va a levantar.
+    temporizador = setTimeout(() => {
+      if (!conectado) cambiarAElevenLabs('tiempo límite sin conectar');
+    }, TIEMPO_LIMITE_MS);
+
+    /* ---------------------------- Botón terminar ---------------------------- */
     document.getElementById('btn-terminar').addEventListener('click', () => {
+      // Si ya se cambió a ElevenLabs, recargar es lo más limpio.
+      if (yaCambio) { location.reload(); return; }
+
       function encontrarEnd(root) {
         if (!root) return null;
         if (root.querySelectorAll) {
@@ -79,7 +224,7 @@
     });
 
     /* ==================================================================
-       Diccionario completo del embed D-ID v2 (build 2.1.27).
+       Diccionario completo del embed D-ID v2.
        Las llaves son las cadenas EXACTAS del bundle, en minúsculas.
        El widget solo trae inglés y alemán de fábrica: no existe opción
        de configuración para español, por eso se parchea el DOM.
