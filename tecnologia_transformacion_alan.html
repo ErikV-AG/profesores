@@ -81,7 +81,7 @@
        ID del agente de ElevenLabs al que se cae cuando D-ID no puede
        operar en video.
     ================================================================== */
-    const ELEVENLABS_AGENT_ID = agent_0101m243es8nf93rx65gh1h39nv5;
+    const ELEVENLABS_AGENT_ID = 'agent_0101m243es8nf93rx65gh1h39nv5';
 
     /* =================================================================
        DETECCIÓN DE FALTA DE CRÉDITOS EN D-ID
@@ -110,6 +110,22 @@
     ================================================================== */
 
     const TIEMPO_LIMITE_MS = 30000; // respaldo, contado desde "connecting"
+
+    /* Respaldo de ARRANQUE. Caso verificado en vivo: cuando la cuenta de
+       D-ID está agotada, el widget a veces se queda en "Loading..." para
+       siempre y NO emite ningún evento — ni connection, ni chatMode, ni
+       error. Cero. En ese escenario el respaldo anterior (que se contaba
+       desde "connecting") nunca arrancaba y la página quedaba colgada.
+
+       La distinción que importa: una página que espera el clic del alumno
+       es legítima y puede tardar lo que sea; una que sigue con el overlay
+       de carga encima no va a levantar. Por eso no basta con buscar el
+       botón de inicio: cuando está colgado, el botón EXISTE y mide 190x40,
+       solo que tapado por el overlay. Lo que discrimina es el overlay. */
+    const ESPERA_CARGA_MS = 35000;
+    let listoParaUsuario = false;
+    let temporizadorCarga = null;
+    let vigilancia = null;
     let yaCambio = false;
     let conectado = false;
     let temporizador = null;
@@ -118,6 +134,8 @@
       if (yaCambio) return;
       yaCambio = true;
       clearTimeout(temporizador);
+      clearTimeout(temporizadorCarga);
+      clearInterval(vigilancia);
       console.log('[agente] Cambiando a ElevenLabs. Motivo:', motivo);
 
       document.getElementById('aviso-cambio').style.display = 'flex';
@@ -173,14 +191,14 @@
 
       script.addEventListener('load', () => {
         document.getElementById('aviso-cambio').style.display = 'none';
-        contenedor.style.display = 'flex';
+        contenedor.style.display = 'block';
         autoIniciarElevenLabs(widget);
       });
       // Si el script tarda, mostrar de todos modos para no dejar la
       // pantalla en el aviso indefinidamente.
       setTimeout(() => {
         document.getElementById('aviso-cambio').style.display = 'none';
-        contenedor.style.display = 'flex';
+        contenedor.style.display = 'block';
       }, 6000);
     }
 
@@ -288,6 +306,53 @@
         }
       }, 250);
     })();
+
+    /* ---------- Detección del estado real del widget de D-ID ---------- */
+
+    // Recorre también los shadow roots, donde vive la interfaz de D-ID.
+    function hayOverlayCargando(root) {
+      if (!root || !root.querySelectorAll) return false;
+      if (/loading\.\.\.|cargando\.\.\./i.test(root.textContent || '')) return true;
+      for (const el of root.querySelectorAll('*')) {
+        if (el.shadowRoot && hayOverlayCargando(el.shadowRoot)) return true;
+      }
+      return false;
+    }
+
+    function hayBotonInicioVisible(root) {
+      if (!root || !root.querySelectorAll) return false;
+      for (const b of root.querySelectorAll('button, [role="button"]')) {
+        const etiqueta = (b.getAttribute('aria-label') || b.textContent || '').toLowerCase();
+        if (etiqueta.includes('start call') || etiqueta.includes('iniciar')) {
+          const r = b.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) return true;
+        }
+      }
+      for (const el of root.querySelectorAll('*')) {
+        if (el.shadowRoot && hayBotonInicioVisible(el.shadowRoot)) return true;
+      }
+      return false;
+    }
+
+    // Vigilancia de arranque: si el widget queda listo y esperando al
+    // alumno, se cancela el respaldo (puede tardar lo que quiera en dar
+    // clic). Si sigue con el overlay de carga al vencer el plazo, se
+    // asume que no va a levantar y se cambia a ElevenLabs.
+    vigilancia = setInterval(() => {
+      if (yaCambio || conectado) { clearInterval(vigilancia); return; }
+      if (!hayOverlayCargando(document.body) && hayBotonInicioVisible(document.body)) {
+        listoParaUsuario = true;
+        clearInterval(vigilancia);
+        clearTimeout(temporizadorCarga);
+        console.log('[agente] D-ID listo, esperando al usuario');
+      }
+    }, 1000);
+
+    temporizadorCarga = setTimeout(() => {
+      if (!listoParaUsuario && !conectado) {
+        cambiarAElevenLabs('D-ID nunca terminó de cargar');
+      }
+    }, ESPERA_CARGA_MS);
 
     /* ---------------------------- Botón terminar ---------------------------- */
     document.getElementById('btn-terminar').addEventListener('click', () => {
@@ -467,12 +532,20 @@
       });
     }
 
+    /* El MutationObserver de document.body NO ve los cambios que ocurren
+       dentro de los shadow roots, que es justamente donde D-ID redibuja su
+       interfaz. Y el barrido original se detenía a los 20 segundos.
+       Resultado verificado en vivo: pasado ese punto, cuando el widget
+       redibujaba, volvían a aparecer "Start call", "Loading..." y "AI" en
+       inglés y ya nada los corregía.
+
+       Por eso el barrido ahora no se detiene. Es un recorrido barato sobre
+       una página de un solo componente, y se ejecuta cada 1.5 s. */
     window.addEventListener('load', () => {
       traducirArbol(document.body);
       new MutationObserver(() => traducirArbol(document.body))
         .observe(document.body, { childList: true, subtree: true });
-      let i = 20;
-      const t = setInterval(() => { traducirArbol(document.body); if (!--i) clearInterval(t); }, 1000);
+      setInterval(() => traducirArbol(document.body), 1500);
     });
 
     window.addEventListener('beforeunload', () => {
