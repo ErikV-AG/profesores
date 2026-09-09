@@ -107,7 +107,7 @@
        respaldo por tiempo, por si en algún escenario ninguno llegara.
 
        IMPORTANTE: el evento solo llega DESPUÉS de que el usuario da clic
-       en "Iniciar llamada" — no al cargar la página. Verificado en vivo:
+       en "Iniciar conversación" — no al cargar la página. Verificado en vivo:
        llega 10.3 s después del clic. Por eso el respaldo por tiempo NO
        puede arrancar al cargar: la página puede estar legítimamente
        esperando el clic durante minutos. El temporizador arranca solo
@@ -138,28 +138,48 @@
       const contenedor = document.getElementById('elevenlabs-container');
       const widget = document.createElement('elevenlabs-convai');
       widget.setAttribute('agent-id', ELEVENLABS_AGENT_ID);
-      // El widget sale por default como una píldora flotante en la esquina
-      // y con textos en inglés. "expanded" lo abre directo, y los
-      // atributos de texto lo dejan en español sin parchear el DOM
-      // (a diferencia de D-ID, aquí sí hay soporte nativo).
-      widget.setAttribute('variant', 'expanded');
+
+      // Chat de texto junto a la voz. Verificado: este atributo agrega el
+      // campo de escritura y el botón de enviar. (La documentación afirma
+      // que esto solo se puede activar desde el dashboard; es incorrecto
+      // para este build del widget.)
+      widget.setAttribute('text-input', 'true');
+
+      // Abre el widget a tamaño completo en vez de la píldora de esquina.
+      // "variant=expanded" que aparece en la documentación NO tiene efecto
+      // en este build; el atributo real es always-expanded.
+      widget.setAttribute('always-expanded', 'true');
+
       widget.setAttribute('language', 'es');
-      widget.setAttribute('action-text', '¿Tienes una pregunta?');
-      widget.setAttribute('start-call-text', 'Iniciar llamada');
-      widget.setAttribute('end-call-text', 'Terminar llamada');
-      widget.setAttribute('expand-text', 'Abrir');
-      widget.setAttribute('listening-text', 'Escuchando');
-      widget.setAttribute('speaking-text', 'Hablando');
+
+      // Los atributos sueltos start-call-text / end-call-text / etc. de la
+      // documentación NO existen en este build: no están entre los
+      // observedAttributes del componente. El mecanismo real es un solo
+      // atributo con un objeto JSON de llaves en snake_case.
+      widget.setAttribute('text-contents', JSON.stringify({
+        action_text: '¿Tienes una pregunta?',
+        start_call: 'Iniciar conversación',
+        end_call: 'Terminar conversación',
+        expand: 'Abrir conversación',
+        listening_status: 'Escuchando',
+        speaking_status: 'Hablando',
+        input_placeholder: 'Escribe tu pregunta...',
+      }));
+
       contenedor.appendChild(widget);
 
       const script = document.createElement('script');
-      script.src = 'https://elevenlabs.io/convai-widget/index.js';
+      // Script oficial que entrega el dashboard de ElevenLabs. El build
+      // antiguo (elevenlabs.io/convai-widget/index.js) es legado.
+      script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
       script.async = true;
+      script.type = 'text/javascript';
       document.body.appendChild(script);
 
       script.addEventListener('load', () => {
         document.getElementById('aviso-cambio').style.display = 'none';
         contenedor.style.display = 'flex';
+        autoIniciarElevenLabs(widget);
       });
       // Si el script tarda, mostrar de todos modos para no dejar la
       // pantalla en el aviso indefinidamente.
@@ -167,6 +187,56 @@
         document.getElementById('aviso-cambio').style.display = 'none';
         contenedor.style.display = 'flex';
       }, 6000);
+    }
+
+    /* -----------------------------------------------------------------
+       Autoinicio de la conversación de ElevenLabs.
+
+       La documentación describe un método widget.startConversation().
+       Ese método NO existe en este build: el componente solo expone
+       connectedCallback / attributeChangedCallback / disconnectedCallback.
+       Verificado en vivo sobre el widget real.
+
+       El camino que sí funciona es pulsar el botón de inicio dentro del
+       Shadow DOM del widget — la misma técnica que ya se usa arriba para
+       el botón "Terminar" de D-ID.
+
+       Como el usuario ya dio un clic (el de iniciar con D-ID), la página
+       tiene interacción previa y el navegador permite abrir el micrófono.
+
+       NOTA: si el agente tiene activados los términos y condiciones en su
+       configuración de ElevenLabs, al iniciar aparecerá un diálogo de
+       consentimiento que el alumno debe aceptar. Ese diálogo NO se pulsa
+       automáticamente a propósito: es una aceptación legal y le
+       corresponde a la persona darla. Si no lo quieres en el curso,
+       desactívalo en el dashboard (Widget → Terms).
+    ------------------------------------------------------------------ */
+    function autoIniciarElevenLabs(widget) {
+      let intentos = 40; // ~10 s
+      const t = setInterval(() => {
+        const sr = widget.shadowRoot;
+        if (sr) {
+          const botones = sr.querySelectorAll('button, [role="button"]');
+          let inicio = null;
+          for (const b of botones) {
+            const etiqueta = (b.getAttribute('aria-label') || b.textContent || '').toLowerCase();
+            if (etiqueta.includes('iniciar') || etiqueta.includes('start call')) {
+              inicio = b;
+              break;
+            }
+          }
+          if (inicio) {
+            clearInterval(t);
+            inicio.click();
+            console.log('[agente] conversación de ElevenLabs iniciada automáticamente');
+            return;
+          }
+        }
+        if (!--intentos) {
+          clearInterval(t);
+          console.log('[agente] no se encontró el botón de inicio; queda el inicio manual');
+        }
+      }, 250);
     }
 
     function engancharEventosDID(api) {
@@ -268,25 +338,25 @@
     const TRADUCCIONES = {
 
       /* ---------- Arranque / conexión ---------- */
-      'start call':                    'Iniciar llamada',
+      'start call':                    'Iniciar conversación',
       'starting...':                   'Iniciando...',
       'connecting...':                 'Conectando...',
       'loading...':                    'Cargando...',
       'hang tight':                    'Un momento',
       'reconnect':                     'Reconectar',
-      'continue call...':              'Continuar llamada...',
+      'continue call...':              'Continuar conversación...',
       "let's continue":                'Continuemos',
-      'create new call':               'Crear nueva llamada',
-      'start a new call':              'Iniciar una nueva llamada',
+      'create new call':               'Crear nueva conversación',
+      'start a new call':              'Iniciar una nueva conversación',
       'want to continue where we left off?': '¿Quieres continuar donde nos quedamos?',
       'are you still here?':           '¿Sigues ahí?',
-      'call ended':                    'Llamada finalizada',
+      'call ended':                    'Conversación finalizada',
       'understood':                    'Entendido',
       'skip':                          'Omitir',
       'close':                         'Cerrar',
 
-      /* ---------- Controles de llamada ---------- */
-      'end call':                      'Terminar llamada',
+      /* ---------- Controles de la conversación ---------- */
+      'end call':                      'Terminar conversación',
       'turn microphone on':            'Encender micrófono',
       'mute microphone':               'Silenciar micrófono',
       'unmute microphone':             'Activar micrófono',
@@ -322,7 +392,7 @@
         'Tu navegador necesita permiso para usar el micrófono.',
       'got a question?':               '¿Tienes una pregunta?',
       'talk to a live interactive agent, just turn on your mic to start the call.':
-        'Habla con un agente interactivo en vivo: solo enciende el micrófono para iniciar la llamada.',
+        'Habla con un agente interactivo en vivo: solo enciende el micrófono para iniciar la conversación.',
       'we are blocked from using your microphone':
         'El acceso a tu micrófono está bloqueado',
       "click the page info icon in your browser's address bar":
@@ -340,7 +410,7 @@
       'the agent is temporarily unavailable. please try again later.':
         'El agente no está disponible por el momento. Inténtalo más tarde.',
 
-      /* ---------- Encuesta de fin de llamada ---------- */
+      /* ---------- Encuesta de fin de conversación ---------- */
       'rate your experience':          'Califica tu experiencia',
       'submit':                        'Enviar',
       'thanks for your feedback!':     '¡Gracias por tus comentarios!',
