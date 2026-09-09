@@ -16,6 +16,17 @@
       background: #0f1115;
     }
 
+    /* El widget usa Shadow DOM; solo expone estas variables para su
+       tamaño. Sin esto se queda como una píldora chica en la esquina,
+       que dentro del iframe de Rise se ve perdida. */
+    #elevenlabs-container elevenlabs-convai {
+      position: static;
+      --elevenlabs-convai-widget-width: 420px;
+      --elevenlabs-convai-widget-height: 620px;
+      max-width: 96%;
+      max-height: 96%;
+    }
+
     #btn-terminar {
       position: fixed;
       top: 10px;
@@ -75,7 +86,7 @@
        ID del agente de ElevenLabs al que se cae cuando D-ID no puede
        operar en video.
     ================================================================== */
-    const ELEVENLABS_AGENT_ID = agent_0101m243es8nf93rx65gh1h39nv5;
+    const ELEVENLABS_AGENT_ID = 'agent_0101m243es8nf93rx65gh1h39nv5';
 
     /* =================================================================
        DETECCIÓN DE FALTA DE CRÉDITOS EN D-ID
@@ -90,13 +101,20 @@
            error     ->  { error: { kind: "ChatModeDowngraded" } }
 
        Verificado en vivo sobre una página con la cuenta agotada: el
-       evento llega ~11 s después de iniciar la conexión.
+       evento llega ~10 s después de iniciar la conexión.
 
        Se escuchan ambos (cualquiera de los dos dispara el cambio) más un
        respaldo por tiempo, por si en algún escenario ninguno llegara.
+
+       IMPORTANTE: el evento solo llega DESPUÉS de que el usuario da clic
+       en "Iniciar llamada" — no al cargar la página. Verificado en vivo:
+       llega 10.3 s después del clic. Por eso el respaldo por tiempo NO
+       puede arrancar al cargar: la página puede estar legítimamente
+       esperando el clic durante minutos. El temporizador arranca solo
+       cuando la conexión pasa a "connecting".
     ================================================================== */
 
-    const TIEMPO_LIMITE_MS = 25000; // respaldo si no llega ningún evento
+    const TIEMPO_LIMITE_MS = 30000; // respaldo, contado desde "connecting"
     let yaCambio = false;
     let conectado = false;
     let temporizador = null;
@@ -120,6 +138,18 @@
       const contenedor = document.getElementById('elevenlabs-container');
       const widget = document.createElement('elevenlabs-convai');
       widget.setAttribute('agent-id', ELEVENLABS_AGENT_ID);
+      // El widget sale por default como una píldora flotante en la esquina
+      // y con textos en inglés. "expanded" lo abre directo, y los
+      // atributos de texto lo dejan en español sin parchear el DOM
+      // (a diferencia de D-ID, aquí sí hay soporte nativo).
+      widget.setAttribute('variant', 'expanded');
+      widget.setAttribute('language', 'es');
+      widget.setAttribute('action-text', '¿Tienes una pregunta?');
+      widget.setAttribute('start-call-text', 'Iniciar llamada');
+      widget.setAttribute('end-call-text', 'Terminar llamada');
+      widget.setAttribute('expand-text', 'Abrir');
+      widget.setAttribute('listening-text', 'Escuchando');
+      widget.setAttribute('speaking-text', 'Hablando');
       contenedor.appendChild(widget);
 
       const script = document.createElement('script');
@@ -159,9 +189,21 @@
 
       api.events.on('connection', ({ state }) => {
         console.log('[agente] conexión:', state);
+
+        if (state === 'connecting') {
+          // Recién aquí tiene sentido contar tiempo: antes de esto la
+          // página está esperando que el usuario dé clic en iniciar.
+          clearTimeout(temporizador);
+          temporizador = setTimeout(() => {
+            if (!conectado) cambiarAElevenLabs('tiempo límite sin conectar');
+          }, TIEMPO_LIMITE_MS);
+        }
+
         if (state === 'connected') {
           conectado = true;
+          clearTimeout(temporizador);
         }
+
         if (state === 'fail') {
           cambiarAElevenLabs('connection = fail');
         }
@@ -181,12 +223,6 @@
         }
       }, 250);
     })();
-
-    // Respaldo por tiempo: si en 25 s no se logró conectar y tampoco
-    // llegó ningún evento de degradación, se asume que no va a levantar.
-    temporizador = setTimeout(() => {
-      if (!conectado) cambiarAElevenLabs('tiempo límite sin conectar');
-    }, TIEMPO_LIMITE_MS);
 
     /* ---------------------------- Botón terminar ---------------------------- */
     document.getElementById('btn-terminar').addEventListener('click', () => {
@@ -323,14 +359,29 @@
       'ai':                            'IA',
     };
 
+    /* Avisos que traen datos variables (ids de error), por lo que no se
+       pueden traducir por coincidencia exacta. Se buscan por fragmento.
+       El primero es el que D-ID muestra al quedarse sin créditos de
+       video: "Voice and face animations are temporarily unavailable.
+       You can still use the chat. (Error id: xxxxxx)" */
+    const TRADUCCIONES_PARCIALES = [
+      ['voice and face animations are temporarily unavailable',
+       'Las animaciones de voz y rostro no están disponibles por el momento. Puedes seguir usando el chat.'],
+    ];
+
     function traducirArbol(root) {
       if (!root) return;
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
       let nodo;
       while ((nodo = walker.nextNode())) {
         const lower = nodo.textContent.trim().toLowerCase();
+        let hecho = false;
         for (const [en, es] of Object.entries(TRADUCCIONES)) {
-          if (lower === en) { nodo.textContent = es; break; }
+          if (lower === en) { nodo.textContent = es; hecho = true; break; }
+        }
+        if (hecho) continue;
+        for (const [frag, es] of TRADUCCIONES_PARCIALES) {
+          if (lower.includes(frag)) { nodo.textContent = es; break; }
         }
       }
       if (!root.querySelectorAll) return;
