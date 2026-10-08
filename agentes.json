@@ -12,7 +12,7 @@
     "elevenlabs_agent_id": ""
   },
   "analisis_datos_alan": {
-    "nombre": "Alan Turing · Análisis de datos",
+    "nombre": "Alan Turing · Análisis de Datos I",
     "did_agent_id": "v2_agt__YgfdO7n",
     "did_client_key": "ck_zGdmq_elN2yjBpAQjKMgP",
     "elevenlabs_agent_id": ""
@@ -24,13 +24,13 @@
     "elevenlabs_agent_id": ""
   },
   "aplicacion_termodinamica_carnot": {
-    "nombre": "Sadi Carnot · Aplicación de la termodinámica",
+    "nombre": "Sadi Carnot · Aplicación de la Termodinámica en Sistemas Ingenieriles",
     "did_agent_id": "v2_agt_XFYCIH8p",
     "did_client_key": "ck_mNllhdenXIL041Idwu_aq",
     "elevenlabs_agent_id": ""
   },
   "calculo_alan": {
-    "nombre": "Alan Turing · Cálculo",
+    "nombre": "Alan Turing · Cálculo I",
     "did_agent_id": "v2_agt_VRr-daUT",
     "did_client_key": "ck_j4tRwGC0uPBeVPavOeiyA",
     "elevenlabs_agent_id": ""
@@ -48,7 +48,7 @@
     "elevenlabs_agent_id": ""
   },
   "cultura_digital_alan": {
-    "nombre": "Alan Turing · Cultura digital",
+    "nombre": "Alan Turing · Cultura Digital I",
     "did_agent_id": "v2_agt_ml8WVFwn",
     "did_client_key": "ck_GgCJ_FF7GIMVrRia8-Prr",
     "elevenlabs_agent_id": ""
@@ -114,7 +114,7 @@
     "elevenlabs_agent_id": ""
   },
   "entorno_economico_smith": {
-    "nombre": "Adam Smith · Entorno económico",
+    "nombre": "Adam Smith · Entorno Económico y Social en los Negocios",
     "did_agent_id": "v2_agt_zvXKj2ig",
     "did_client_key": "ck_2H6cF9tHJ8faXk20ZgtuH",
     "elevenlabs_agent_id": ""
@@ -144,19 +144,19 @@
     "elevenlabs_agent_id": ""
   },
   "fundamentos_economia_smith": {
-    "nombre": "Adam Smith · Fundamentos de economía",
+    "nombre": "Adam Smith · Fundamentos de Economía y Negocios",
     "did_agent_id": "v2_agt_pE-fb9k-",
     "did_client_key": "ck_lPg4Z418rf06mrUrdl1-G",
     "elevenlabs_agent_id": ""
   },
   "informatica_alan": {
-    "nombre": "Alan Turing · Informática",
+    "nombre": "Alan Turing · Informática para Ingeniería",
     "did_agent_id": "v2_agt_GFNPsqDj",
     "did_client_key": "ck_QX6U7UxoIj9JkSmAdgkQR",
     "elevenlabs_agent_id": ""
   },
   "ingenieria_productividad_lilian": {
-    "nombre": "Lillian Gilbreth · Ingeniería de la productividad",
+    "nombre": "Lillian Gilbreth · Ingeniería Industrial y Productividad",
     "did_agent_id": "v2_agt_MaWS5TZU",
     "did_client_key": "ck_bNhSNE5IKgqgq76QIoeze",
     "elevenlabs_agent_id": ""
@@ -192,7 +192,7 @@
     "elevenlabs_agent_id": ""
   },
   "matematicas_negocios_alan": {
-    "nombre": "Alan Turing · Matemáticas para los negocios",
+    "nombre": "Alan Turing · Matemáticas para Negocios",
     "did_agent_id": "v2_agt_0SC_rwW1",
     "did_client_key": "ck_COIwBrYiMGo0M8gQfndRK",
     "elevenlabs_agent_id": ""
@@ -204,7 +204,7 @@
     "elevenlabs_agent_id": ""
   },
   "modelado_gilbreth": {
-    "nombre": "Frank Gilbreth · Modelado",
+    "nombre": "Lillian Gilbreth · Modelado en Ingeniería",
     "did_agent_id": "v2_agt_fbaCNfbK",
     "did_client_key": "ck_FUo4TTeg_2jARcDJ89bsO",
     "elevenlabs_agent_id": ""
@@ -228,19 +228,19 @@
     "elevenlabs_agent_id": ""
   },
   "sistemas_electromagneticos_faraday": {
-    "nombre": "Michael Faraday · Sistemas electromagnéticos",
+    "nombre": "Michael Faraday · Análisis de Sistemas Eléctricos y Electromagnéticos",
     "did_agent_id": "v2_agt_AbFtyMdz",
     "did_client_key": "ck_7ZX-CCSK8lrPoxnCMQ7E1",
     "elevenlabs_agent_id": ""
   },
   "tecnologia_transformacion_alan": {
-    "nombre": "Alan Turing · Tecnología y transformación",
+    "nombre": "Alan Turing · Tecnología y Transformación Digital",
     "did_agent_id": "v2_agt_x9BvMVtR",
     "did_client_key": "ck_au_-fIbjgB1qT6onuuo7Z",
     "elevenlabs_agent_id": "agent_4301m248zp20ejfvys40146npy4e"
   },
   "tecnologias_informacion_alan": {
-    "nombre": "Alan Turing · Tecnologías de la información",
+    "nombre": "Alan Turing · Tecnologías de la Información para los Negocios",
     "did_agent_id": "v2_agt_MwNU8zf7",
     "did_client_key": "ck_X82TF9eBQOZJkUx4yv3L1",
     "elevenlabs_agent_id": ""
