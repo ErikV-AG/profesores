@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- Página generada por scripts/construir.py desde src/plantilla.html.
+       No se edita a mano: los datos del agente están en agentes.json. -->
+  <title>Alan Turing · Tecnología y Transformación Digital</title>
+
+  <!-- Debe ir como script clásico (no module) ANTES de todo lo que pueda
+       crear shadow DOMs.
+
+       1. Seguro contra shadow DOM cerrado: el embed v2 de D-ID abre sus
+          shadow roots, pero si alguna versión los cerrara, la traducción
+          dejaría de alcanzarlos. Forzar mode:'open' no cuesta nada y no
+          altera el widget.
+       2. Relleno de video en pantallas anchas: el video del avatar tiene
+          la proporción de la imagen original (~16:9). En pantallas
+          horizontales más anchas que eso (como el iframe de 350 px de alto
+          en Rise), el video cubre todo el ancho y recorta un poco arriba y
+          abajo, protegiendo la cabeza. En celulares y pantallas verticales
+          no se toca nada. Para desactivarlo: RELLENAR_ANCHO = false. -->
+  <script>
+    (function () {
+      var RELLENAR_ANCHO = true;
+      var CSS_RELLENO =
+        '@media (orientation: landscape) and (min-aspect-ratio: 17/9) {' +
+        '  video { object-fit: cover !important; object-position: center 25% !important; }' +
+        '}';
+
+      var original = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function (init) {
+        var opciones = Object.assign({}, init, { mode: 'open' });
+        var raiz = original.call(this, opciones);
+        // El widget de ElevenLabs no tiene video: no se le inyecta nada.
+        if (RELLENAR_ANCHO && this.localName !== 'elevenlabs-convai') {
+          try {
+            var st = document.createElement('style');
+            st.textContent = CSS_RELLENO;
+            raiz.appendChild(st);
+          } catch (e) {}
+        }
+        return raiz;
+      };
+      // Por si el video no vive en un shadow DOM
+      if (RELLENAR_ANCHO) {
+        var st = document.createElement('style');
+        st.textContent = CSS_RELLENO;
+        document.head.appendChild(st);
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="agente.css?v=a509b16217">
+
+  <!-- Configuración de este agente (generada desde agentes.json) -->
+  <script id="config-agente" type="application/json">{
+  "id": "tecnologia_transformacion_alan",
+  "nombre": "Alan Turing · Tecnología y Transformación Digital",
+  "did_agent_id": "v2_agt_x9BvMVtR",
+  "did_client_key": "ck_au_-fIbjgB1qT6onuuo7Z",
+  "elevenlabs_agent_id": "agent_4301m248zp20ejfvys40146npy4e"
+}</script>
+</head>
+<body>
+
+  <div id="did-agent-container"></div>
+
+  <div id="elevenlabs-container" data-propio hidden></div>
+
+  <div id="cargador" data-propio role="status" aria-live="polite">
+    <span id="cargador-nombre">Alan Turing · Tecnología y Transformación Digital</span>
+    <div class="progreso" aria-hidden="true"></div>
+    <span id="cargador-texto">Conectando…</span>
+  </div>
+
+  <div id="aviso" data-propio role="alert" hidden>
+    <p class="aviso-titulo">El profesor no está disponible por el momento</p>
+    <p class="aviso-detalle">Inténtalo de nuevo en unos minutos.</p>
+    <button id="btn-reintentar" type="button">Intentar de nuevo</button>
+  </div>
+
+  <button id="btn-terminar" data-propio type="button" title="Terminar conversación" hidden>✕ Terminar</button>
+
+  <script src="agente.js?v=eef2de8835"></script>
+</body>
+</html>
