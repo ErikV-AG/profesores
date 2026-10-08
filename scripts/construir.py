@@ -445,11 +445,11 @@ def pagina_agente(plantilla, ident, entrada, ref_css, ref_js):
     return re.sub(r'\{\{[A-Z]+\}\}', lambda m: reemplazos.get(m.group(0), m.group(0)), plantilla)
 
 
-def iframe_de(ident):
+def iframe_de(ident, base=URL_BASE):
     """Exactamente el formato de la cédula (ver CLAUDE.md)."""
     return ('<iframe src="%s%s.html"\n'
             '  width="100%%" height="350" frameborder="0"\n'
-            '  allow="microphone; camera; autoplay" allowfullscreen></iframe>' % (URL_BASE, ident))
+            '  allow="microphone; camera; autoplay" allowfullscreen></iframe>' % (base, ident))
 
 
 def escribir_paginas(destino, plantilla, js, css, agentes):
@@ -656,6 +656,34 @@ def verificar_sitio(reg, agentes):
                 reg.error('la copia de %s/ en _site/ no coincide con el original' % nombre)
 
 
+PRUEBA_IFRAMES = '''<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Prueba en iframe de 350 px</title>
+  <style>
+    body { margin: 0; padding: 16px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+           background: #e9e9e6; color: #26292c; }
+    main { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    h2 { font-size: 15px; margin: 24px 0 6px; }
+    p { margin: 0; font-size: 14px; color: #6b6f73; }
+    iframe { display: block; background: #fff; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Prueba en iframe de 350 px</h1>
+  <p>Cada agente está insertado con el mismo iframe que se pega en Rise.</p>
+%s
+</main>
+</body>
+</html>
+'''
+
+
 def construir_prueba(reg, agentes):
     faltan = [i for i in AGENTES_PRUEBA if i not in agentes]
     if faltan:
@@ -668,7 +696,11 @@ def construir_prueba(reg, agentes):
         shutil.rmtree(CARPETA_PRUEBA)
     CARPETA_PRUEBA.mkdir()
     escribir_paginas(CARPETA_PRUEBA, plantilla, js, css, {i: agentes[i] for i in AGENTES_PRUEBA})
-    info('Prueba generada en prueba/: %s' % ', '.join(i + '.html' for i in AGENTES_PRUEBA))
+    bloques = '\n'.join('  <h2>%s</h2>\n  %s' % (html.escape(agentes[i].get('nombre') or i),
+                                                 iframe_de(i, URL_BASE + 'prueba/').replace('\n', '\n  '))
+                        for i in AGENTES_PRUEBA)
+    (CARPETA_PRUEBA / 'iframes.html').write_text(PRUEBA_IFRAMES % bloques, encoding='utf-8')
+    info('Prueba generada en prueba/: %s e iframes.html' % ', '.join(i + '.html' for i in AGENTES_PRUEBA))
 
 
 # ----------------------------------------------------------------------
