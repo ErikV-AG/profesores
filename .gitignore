@@ -1,0 +1,5 @@
+# Sitio generado por scripts/construir.py
+_site/
+
+# Basura de macOS
+.DS_Store

@@ -1,0 +1,78 @@
+# Valida agentes.json, construye el sitio y lo publica en GitHub Pages.
+#
+# - En un PR: solo valida y construye (no publica). Compara contra la
+#   rama base del PR.
+# - En main: valida, construye y, solo si todo pasó, publica _site/.
+#   Si algo falla, no se publica nada y el sitio queda como estaba.
+# - «Run workflow» (pestaña Actions): vuelve a publicar main; con la
+#   casilla «permitir borrar», un agente quitado de agentes.json a
+#   propósito ya no detiene la publicación.
+name: Publicar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      permitir_borrar:
+        description: 'Permitir borrar agentes (márcala solo si quitaste un agente de agentes.json a propósito)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Una publicación a la vez; un PR no cancela otro.
+concurrency:
+  group: publicar-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  construir:
+    name: Validar y construir
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v5
+        with:
+          # El commit anterior hace falta para COMPARAR_CON=HEAD~1
+          fetch-depth: 2
+
+      - name: Traer la rama base del PR
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.base_ref }}
+        run: git fetch --no-tags --depth=1 origin "$BASE"
+
+      - name: Revisar la sintaxis de agente.js
+        run: node --check src/agente.js
+
+      - name: Validar agentes.json y construir el sitio
+        env:
+          COMPARAR_CON: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD~1' }}
+          PERMITIR_BORRAR: ${{ inputs.permitir_borrar && '1' || '0' }}
+        run: python3 scripts/construir.py
+
+      - name: Empaquetar el sitio
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        # v3 incluye .nojekyll; v4 deja fuera los archivos ocultos.
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  desplegar:
+    name: Publicar en GitHub Pages
+    needs: construir
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - name: Publicar
+        id: despliegue
+        uses: actions/deploy-pages@v4

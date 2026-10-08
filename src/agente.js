@@ -375,6 +375,19 @@
         'open image':                    'Abrir imagen',
         'open video':                    'Abrir video',
 
+        /* ---------- Diapositivas y herramientas (halladas en vivo con
+           __textosPendientes; «Presentation (N slides)» va en
+           TRADUCCIONES_REGLA) ---------- */
+        'tools':                         'Herramientas',
+        'no slides yet':                 'Aún no hay diapositivas',
+        'no slides yet.':                'Aún no hay diapositivas.',
+        'slides your agent shares will appear here.':
+            'Aquí aparecerán las diapositivas que comparta el agente.',
+        'slides your agent shares will appear here':
+            'Aquí aparecerán las diapositivas que comparta el agente',
+        'ai agent video chat':           'Videochat con agente de IA',
+        'chat call':                     'Conversación por chat',
+
         /* ---------- Permisos de micrófono y cámara ---------- */
         "let's get your permission":     'Necesitamos tu permiso',
         'your browser needs permission to use your microphone.':
@@ -428,6 +441,15 @@
          'Las animaciones de voz y rostro no están disponibles por el momento. Puedes seguir usando el chat.'],
     ];
 
+    /* Cadenas con un número variable: se traducen con una regla sobre el
+       texto ya normalizado (minúsculas). */
+    const TRADUCCIONES_REGLA = [
+        // «Presentation (3 slides)» → «Presentación (3 diapositivas)»;
+        // «Presentation (1 slide)» → «Presentación (1 diapositiva)»
+        [/^presentation \((\d+) slides?\)$/,
+         m => 'Presentación (' + m[1] + (Number(m[1]) === 1 ? ' diapositiva)' : ' diapositivas)')],
+    ];
+
     // aria-label va al final para que su original sea el que quede en
     // data-en-original cuando un elemento tiene varios atributos.
     const ATRIBUTOS = ['placeholder', 'title', 'alt', 'aria-label'];
@@ -452,6 +474,10 @@
         const clave = normalizar(txt);
         if (!clave) return null;
         if (Object.prototype.hasOwnProperty.call(TRADUCCIONES, clave)) return TRADUCCIONES[clave];
+        for (const [regla, es] of TRADUCCIONES_REGLA) {
+            const m = clave.match(regla);
+            if (m) return es(m);
+        }
         for (const [fragmento, es] of TRADUCCIONES_PARCIALES) {
             if (clave.includes(fragmento)) return es;
         }
@@ -733,7 +759,10 @@
             } else if (Date.now() - desdeSala > ESPERA_SALA_MS) {
                 cambiarARespaldo('sala de espera o alta demanda por más de ' + ESPERA_SALA_MS / 1000 + ' s');
             }
-        } else {
+        } else if (desdeSala) {
+            // Distingue un aviso pasajero de uno real
+            console.log(LOG, 'D-ID salió de la sala de espera o alta demanda tras ' +
+                ((Date.now() - desdeSala) / 1000).toFixed(1) + ' s');
             desdeSala = 0;
         }
     }, INTERVALO_VIGILANCIA_MS);

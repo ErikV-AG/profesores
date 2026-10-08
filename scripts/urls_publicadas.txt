@@ -1,0 +1,46 @@
+# Páginas .html que existían en la raíz al migrar (rama main, commit 2890154).
+# Hay iframes en cursos de Rise ya publicados que apuntan a ellas: cada una
+# debe seguir existiendo en el sitio con el mismo nombre exacto.
+# scripts/construir.py aborta si falta alguna en _site/.
+Alan_Matematicas.html
+algebra_alan.html
+analisis_datos_alan.html
+analisis_estadistico_alan.html
+aplicacion_termodinamica_carnot.html
+benito.html
+calculo_alan.html
+calculo_ii_turing.html
+comportamiento_consumidor_smith.html
+cultura_digital_alan.html
+derecho_empresarial_taylor.html
+desarrollo_organizacional_lilian.html
+did-agent.html
+diplomadoIA-cert1-GRG_Darwin.html
+diplomadoIA-cert1-UCC_Darwin.html
+diplomadoIA-cert1_Darwin.html
+diplomadoIA-cert2-UCC_UNO.html
+diplomadoIA-cert2_UNO.html
+diplomadoIA-cert3_Alan.html
+emprendimiento_innovacion_taylor.html
+entorno_economico_smith.html
+estrategia_corporativa_taylor.html
+fisica_curie.html
+fundamentos_administacion_taylor.html
+fundamentos_contabilidad_luca.html
+fundamentos_economia_smith.html
+informatica_alan.html
+ingenieria_productividad_lilian.html
+ingles_uno.html
+introduccion_mercadotecnia_smith.html
+leona.html
+leona_vicario.html
+macroeconomia_smith.html
+matematicas_negocios_alan.html
+mecanica_mecanismos_lilian.html
+modelado_gilbreth.html
+planeacion_estrategica_taylor.html
+quimica_curie.html
+quimica_II_curie.html
+sistemas_electromagneticos_faraday.html
+tecnologia_transformacion_alan.html
+tecnologias_informacion_alan.html

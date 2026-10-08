@@ -38,12 +38,20 @@ cambia a un agente de voz de ElevenLabs.
 - `src/plantilla.html`, `src/agente.js`, `src/agente.css` — página, lógica
   y estilo compartidos por todos los agentes.
 - `scripts/construir.py` — valida la lista y genera `_site/`.
+- `scripts/urls_publicadas.txt` — las 42 páginas que existían al migrar;
+  la construcción aborta si falta alguna en `_site/`.
+- Un `.html` suelto en la raíz (salvo `benito.html`) se copia tal cual a
+  `_site/` con un aviso; si su nombre choca con un id de la lista, es error.
 - `scripts/servidor.py` — sirve `_site/` en local imitando GitHub Pages.
 - `.github/workflows/publicar.yml` — construye y despliega en GitHub Pages.
-- `_referencia/` — código de referencia; no se publica.
+  Cada publicación incluye `ids-publicados.json`; en Actions, la
+  validación exige que esos ids sigan en `agentes.json`.
+- `_referencia/` — código de referencia; no se publica. Las páginas
+  anteriores a la migración están en `_referencia/paginas_anteriores/`.
 
 ## Comandos
     python3 scripts/construir.py            # valida y genera _site/
     python3 scripts/construir.py --validar  # solo valida
+    python3 scripts/construir.py --prueba   # genera prueba/ (3 agentes)
     python3 scripts/servidor.py             # http://localhost:8000/lista.html (pruebas en la sesión)
     node --check src/agente.js
