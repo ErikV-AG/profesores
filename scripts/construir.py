@@ -276,10 +276,40 @@ def leer_urls_publicadas(reg):
     return urls
 
 
+# Páginas que genera la construcción: un .html suelto en la raíz con
+# alguno de estos nombres chocaría con ellas.
+PAGINAS_GENERADAS = {'lista.html', '404.html'}
+
+
+def html_sueltos():
+    """Páginas .html subidas directo a la raíz, como se hacía antes de la
+    migración (sin pasar por agentes.json). Se publican tal cual."""
+    tal_cual = {c for c in COPIAS_TAL_CUAL if c.endswith('.html')}
+    return sorted((p.name for p in RAIZ.glob('*.html') if p.is_file() and p.name not in tal_cual),
+                  key=str.lower)
+
+
+def validar_html_sueltos(reg, agentes):
+    """Un .html suelto no bloquea la publicación (se copia tal cual con un
+    aviso), salvo que su nombre choque con una página generada."""
+    for nombre in html_sueltos():
+        ident = nombre[:-5]
+        if ident in agentes:
+            reg.error('%s está en la raíz y "%s" también está en agentes.json: las dos páginas tendrían la '
+                      'misma URL. Borra el archivo; la página ya sale de agentes.json.' % (nombre, ident), nombre)
+        elif nombre in PAGINAS_GENERADAS:
+            reg.error('%s está en la raíz y choca con la página %s que genera la construcción. '
+                      'Cámbiale el nombre o bórralo.' % (nombre, nombre), nombre)
+        else:
+            reg.aviso('%s se publicó sin pasar por agentes.json: no tiene compuerta a ElevenLabs ni la '
+                      'traducción nueva. Agrégalo a la lista y borra el archivo' % nombre, nombre)
+
+
 def validar_urls_publicadas(reg, agentes):
     """Cada página que existía al migrar sigue existiendo: hay iframes en
     cursos de Rise ya publicados que apuntan a ella."""
-    disponibles = {ident + '.html' for ident in agentes} | {c for c in COPIAS_TAL_CUAL if c.endswith('.html')}
+    disponibles = ({ident + '.html' for ident in agentes} | {c for c in COPIAS_TAL_CUAL if c.endswith('.html')}
+                   | set(html_sueltos()))
     for url in leer_urls_publicadas(reg):
         if url not in disponibles:
             reg.error('%s está publicada en cursos de Rise y ya no saldría en el sitio: falta el agente "%s" '
@@ -387,6 +417,7 @@ def validar(reg):
     if agentes is None:
         return None
     validar_entradas(reg, agentes, texto)
+    validar_html_sueltos(reg, agentes)
     validar_urls_publicadas(reg, agentes)
     comparar_con_git(reg, agentes, texto)
     comparar_con_publicados(reg, agentes)
@@ -624,6 +655,10 @@ def construir_sitio(reg, agentes):
             shutil.copy2(origen, SALIDA / nombre)
         else:
             reg.error('no existe %s, que se publica tal cual' % nombre)
+
+    # Validar ya revisó que ninguno choque con una página generada.
+    for nombre in html_sueltos():
+        shutil.copy2(RAIZ / nombre, SALIDA / nombre)
     return True
 
 
@@ -646,6 +681,11 @@ def verificar_sitio(reg, agentes):
     for nombre in ('agente.js', 'agente.css', 'lista.html', '404.html', '.nojekyll', 'ids-publicados.json'):
         if not (SALIDA / nombre).is_file():
             reg.error('falta %s en _site/' % nombre)
+
+    for nombre in html_sueltos():
+        copia = SALIDA / nombre
+        if not copia.is_file() or copia.read_bytes() != (RAIZ / nombre).read_bytes():
+            reg.error('%s en _site/ no es copia idéntica del archivo de la raíz' % nombre)
 
     for nombre in COPIAS_TAL_CUAL:
         origen = RAIZ / nombre

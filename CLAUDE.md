@@ -40,6 +40,8 @@ cambia a un agente de voz de ElevenLabs.
 - `scripts/construir.py` — valida la lista y genera `_site/`.
 - `scripts/urls_publicadas.txt` — las 42 páginas que existían al migrar;
   la construcción aborta si falta alguna en `_site/`.
+- Un `.html` suelto en la raíz (salvo `benito.html`) se copia tal cual a
+  `_site/` con un aviso; si su nombre choca con un id de la lista, es error.
 - `scripts/servidor.py` — sirve `_site/` en local imitando GitHub Pages.
 - `.github/workflows/publicar.yml` — construye y despliega en GitHub Pages.
   Cada publicación incluye `ids-publicados.json`; en Actions, la

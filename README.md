@@ -39,6 +39,29 @@ la vez. No se edita ninguna página `.html` a mano.
    **Create a new branch… and start a pull request** (recomendado: así la
    revisión corre antes de publicar y puedes revertir con un botón).
 
+## Para colaboradores: no subas páginas `.html` a la raíz
+
+Antes cada agente era un archivo `.html` copiado a mano. Ahora cada agente
+es una entrada de `agentes.json` y la página se genera sola, con la
+compuerta a ElevenLabs y la traducción completa.
+
+Si alguien sube un `.html` directo a la raíz (cualquiera menos
+`benito.html`), la publicación **no se detiene**: el archivo se publica tal
+cual, pero sin compuerta ni traducción nueva, y en **Actions** aparece un
+aviso amarillo: «*archivo*.html se publicó sin pasar por agentes.json…».
+Para pasarlo a la lista sin que su URL deje de funcionar:
+
+1. Agrega el agente a `agentes.json` con el mismo id (el nombre del archivo
+   sin `.html`) y haz el commit. Esa publicación fallará a propósito,
+   porque el archivo y la lista tendrían la misma URL. El sitio sigue como
+   estaba.
+2. Borra el archivo `.html` de la raíz (abre el archivo → menú **⋯** →
+   **Delete file** → **Commit changes**). Ahora sí se publica, y la página
+   sale de la lista con la misma URL.
+
+También detiene la publicación un `.html` en la raíz llamado `lista.html` o
+`404.html`, porque esas páginas las genera la construcción.
+
 ## ¿Se publicó?
 
 Abre la pestaña **Actions** del repositorio. Cada cambio en `main` lanza
