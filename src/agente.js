@@ -217,10 +217,31 @@
         return Array.from(raiz.querySelectorAll('*')).filter(el => !el.closest('[data-propio], elevenlabs-convai'));
     }
 
-    function visible(el) {
-        if (!el || !el.getBoundingClientRect) return false;
+    /* ¿El alumno ve este elemento? Medir el tamaño no basta: el D-ID real
+       tiene SIEMPRE en el DOM los textos de la sala de espera («Looking for
+       agent», «Finding an available agent…») dentro de
+       DIV.didagent__embedded__container__loading con opacity 0, y ese
+       elemento mide 189×26 px (verificado en vivo). Por eso se sube por los
+       ancestros, cruzando los shadow hosts (getRootNode().host) y los
+       <slot>, y se descarta si alguno tiene display:none u opacity 0, o si
+       el elemento mide 0. visibility se hereda (también a través de los
+       shadow roots), así que basta con la del propio elemento: un hijo con
+       visibility:visible dentro de un padre hidden sí se ve.
+
+       La subida se detiene en el contenedor de D-ID: su opacity 0 inicial
+       es la cortina propia mientras se traduce, no un estado de D-ID. */
+    function esVisible(el) {
+        if (!el || el.nodeType !== 1 || !el.isConnected) return false;
         const r = el.getBoundingClientRect();
-        return r.width > 0 && r.height > 0;
+        if (r.width <= 0 || r.height <= 0) return false;
+        const estilo = getComputedStyle(el);
+        if (estilo.visibility === 'hidden' || estilo.visibility === 'collapse') return false;
+        for (let n = el; n && n !== contenedorDID;
+             n = n.assignedSlot || n.parentElement || n.getRootNode().host || null) {
+            const st = getComputedStyle(n);
+            if (st.display === 'none' || parseFloat(st.opacity) === 0) return false;
+        }
+        return true;
     }
 
     /* ==================================================================
@@ -621,7 +642,7 @@
 
     function buscarBotonInicio() {
         if (botonInicioHallado || yaCambio) return;
-        const boton = buscarEnDID(esBotonInicio);
+        const boton = buscarEnDID(el => esBotonInicio(el) && esVisible(el));
         if (!boton) return;
         botonInicioHallado = true;
         if (AUTO_INICIO) {
@@ -668,7 +689,8 @@
         let hay = false;
         for (const raiz of raicesDID()) {
             textos(raiz, n => {
-                if (!hay && TEXTOS_CARGANDO.some(t => normalizar(n.nodeValue).includes(t))) hay = true;
+                if (!hay && TEXTOS_CARGANDO.some(t => normalizar(n.nodeValue).includes(t)) &&
+                    esVisible(n.parentElement)) hay = true;
             });
             if (hay) return true;
         }
@@ -676,14 +698,14 @@
     }
 
     function hayBotonInicioVisible() {
-        return !!buscarEnDID(el => esBotonInicio(el) && visible(el));
+        return !!buscarEnDID(el => esBotonInicio(el) && esVisible(el));
     }
 
     function haySalaDeEspera() {
         let hay = false;
         for (const raiz of raicesDID()) {
             textos(raiz, n => {
-                if (!hay && TEXTOS_SALA.includes(normalizar(n.nodeValue)) && visible(n.parentElement)) hay = true;
+                if (!hay && TEXTOS_SALA.includes(normalizar(n.nodeValue)) && esVisible(n.parentElement)) hay = true;
             });
             if (hay) return true;
         }
@@ -950,7 +972,7 @@
             if (widget !== widgetEL) { clearInterval(id); return; }
             const inicio = botonesEL(widget).find(b => {
                 const etiqueta = normalizar(b.getAttribute('aria-label') || b.textContent || '');
-                return etiqueta.includes('iniciar') || etiqueta.includes('start call');
+                return (etiqueta.includes('iniciar') || etiqueta.includes('start call')) && esVisible(b);
             });
             if (inicio) {
                 clearInterval(id);
@@ -1026,7 +1048,8 @@
         if (modo === 'elevenlabs') {
             const fin = botonesEL(widgetEL).find(b => {
                 const etiqueta = normalizar(b.getAttribute('aria-label') || b.textContent || '');
-                return etiqueta === 'terminar conversación' || etiqueta === 'end call' || etiqueta.includes('terminar');
+                return (etiqueta === 'terminar conversación' || etiqueta === 'end call' || etiqueta.includes('terminar')) &&
+                    esVisible(b);
             });
             if (fin) {
                 fin.click();
@@ -1043,7 +1066,7 @@
             return;
         }
 
-        const fin = buscarEnDID(esBotonFin);
+        const fin = buscarEnDID(el => esBotonFin(el) && esVisible(el));
         if (fin) {
             fin.click();
         } else {
