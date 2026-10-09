@@ -244,5 +244,11 @@
     "did_agent_id": "v2_agt_MwNU8zf7",
     "did_client_key": "ck_X82TF9eBQOZJkUx4yv3L1",
     "elevenlabs_agent_id": ""
+  },
+  "diplomadoIA-cert2-GRG_UNO": {
+    "nombre": "UNO · Diplomado IA, certificación 2, GRG",
+    "did_agent_id": "v2_agt_mMFzf-9V",
+    "did_client_key": "ck_nOYv1o8A1qNl-SQm3c4lA",
+    "elevenlabs_agent_id": ""
   }
 }
