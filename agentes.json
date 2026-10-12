@@ -79,14 +79,14 @@
   },
   "diplomadoIA-cert1-UCC_Darwin": {
     "nombre": "Charles Darwin · Diplomado IA, certificación 1 (UCC)",
-    "did_agent_id": "v2_agt_khsSs0Y4",
-    "did_client_key": "ck_3UOMJO6Al50lhxLvV0yKj",
+    "did_agent_id": "v2_agt_RVJhy2DF",
+    "did_client_key": "ck_E4fTRmOjyRcimajm8JZne",
     "elevenlabs_agent_id": ""
   },
   "diplomadoIA-cert1_Darwin": {
     "nombre": "Charles Darwin · Diplomado IA, certificación 1",
-    "did_agent_id": "v2_agt_LdbRNnr4",
-    "did_client_key": "ck_mW7gU73-csemcG9czoFO3",
+    "did_agent_id": "v2_agt_RVJhy2DF",
+    "did_client_key": "ck_E4fTRmOjyRcimajm8JZne",
     "elevenlabs_agent_id": ""
   },
   "diplomadoIA-cert2-UCC_UNO": {
