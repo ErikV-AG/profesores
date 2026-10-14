@@ -253,8 +253,8 @@
   },
   "diplomadoIA-cert3-GRG_Alan": {
     "nombre": "Alan Turing · Diplomado IA, certificación 3, GRG",
-    "did_agent_id": "v2_agt_fjQgURYR",
-    "did_client_key": "ck_jNGs4pZqYMLKHXdGU-UN-",
+    "did_agent_id": "",
+    "did_client_key": "",
     "elevenlabs_agent_id": ""
   }
 }
