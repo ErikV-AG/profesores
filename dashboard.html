@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tablero de agentes · Profesores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1F3A5F; --paper:#FBFCFD; --surface:#FFFFFF; --text:#1B2533; --muted:#5E6B7C;
+  --line:#DDE3EA; --dot:#1F3A5F; --dot-empty:#C9D3DE; --ochre:#B9831F; --ochre-soft:#F5EAD3;
+  --focus:#2F6FB5;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#A9C4E6; --paper:#121A24; --surface:#18222F; --text:#E6ECF2; --muted:#93A1B2;
+    --line:#2A3746; --dot:#A9C4E6; --dot-empty:#344457; --ochre:#E2B04F; --ochre-soft:#3A2F17;
+    --focus:#7FB0EA; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#A9C4E6; --paper:#121A24; --surface:#18222F; --text:#E6ECF2; --muted:#93A1B2;
+  --line:#2A3746; --dot:#A9C4E6; --dot-empty:#344457; --ochre:#E2B04F; --ochre-soft:#3A2F17;
+  --focus:#7FB0EA; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--text);font:400 16px/1.55 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:40px 24px 64px}
+h1,h2{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif;color:var(--ink);margin:0}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:28px}
+header p{margin:0;color:var(--muted);font-size:14px}
+.src{font-size:13px;color:var(--muted)}
+.src b{font-weight:600;color:var(--text)}
+.headline{font-size:clamp(34px,6vw,64px);font-weight:800;line-height:1.02;letter-spacing:-.02em;max-width:16ch}
+.sub{display:flex;flex-wrap:wrap;gap:28px;margin:22px 0 44px;color:var(--muted);font-size:15px}
+.sub strong{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:28px;color:var(--text);font-weight:600;line-height:1.1}
+.sub .el strong{color:var(--ochre)}
+section{margin-bottom:48px}
+h2{font-size:22px;font-weight:600;margin-bottom:6px}
+.hint{color:var(--muted);font-size:14px;margin:0 0 16px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:14px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.roster{border-top:1px solid var(--line)}
+.row{border-bottom:1px solid var(--line)}
+.row>button{all:unset;cursor:pointer;display:grid;grid-template-columns:minmax(150px,220px) 1fr auto;gap:16px;align-items:center;width:100%;padding:14px 4px}
+.row>button:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+.who{font-weight:600}
+.dots{display:flex;flex-wrap:wrap;gap:6px}
+.d{width:14px;height:14px;border-radius:50%;background:var(--dot)}
+.d.el{background:var(--ochre);box-shadow:0 0 0 3px var(--ochre-soft)}
+.d.gen{background:transparent;border:2px solid var(--dot-empty)}
+.n{font-family:"Bricolage Grotesque",sans-serif;font-size:20px;font-weight:600;min-width:2.5ch;text-align:right;color:var(--ink)}
+.detail{display:none;padding:0 4px 18px}
+.row.open .detail{display:block}
+.detail ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 24px}
+.detail li{font-size:14.5px;padding:4px 0;display:flex;gap:8px;align-items:baseline}
+.detail li .d{flex:none;width:9px;height:9px;transform:translateY(-1px)}
+.detail small{color:var(--muted);font-size:12.5px}
+.tag{font-size:12px;color:var(--ochre);font-weight:600}
+.tools{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+input,select{font:inherit;font-size:15px;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px}
+input{flex:1;min-width:200px}
+input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:13px;position:sticky;top:0;background:var(--surface)}
+tr:last-child td{border-bottom:0}
+td code{font-size:13px;color:var(--muted)}
+.yes{color:var(--ochre);font-weight:600}
+.no{color:var(--muted)}
+.count{font-size:13px;color:var(--muted);margin-top:8px}
+@media (max-width:620px){
+  .row>button{grid-template-columns:1fr auto;grid-template-areas:"who n" "dots dots";gap:8px 12px}
+  .who{grid-area:who}.dots{grid-area:dots}.n{grid-area:n}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p>Profesores · Academia Global</p>
+    <p class="src" id="src">Cargando agentes…</p>
+  </header>
+
+  <h1 class="headline" id="headline">…</h1>
+  <div class="sub">
+    <div><strong id="kDid">–</strong>agentes D-ID distintos</div>
+    <div class="el"><strong id="kEl">–</strong>con respaldo ElevenLabs</div>
+  </div>
+
+  <section>
+    <h2>Materias por personaje</h2>
+    <p class="hint">Cada punto es una página de agente. Selecciona un personaje para ver sus materias.</p>
+    <div class="legend">
+      <span><i class="d" style="width:10px;height:10px"></i>Materia</span>
+      <span><i class="d el" style="width:10px;height:10px"></i>Materia con respaldo ElevenLabs</span>
+    </div>
+    <div class="roster" id="roster"></div>
+  </section>
+
+  <section>
+    <h2>Todos los agentes</h2>
+    <p class="hint">Busca por personaje, materia o nombre de página.</p>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Buscar…" aria-label="Buscar agentes">
+      <select id="f" aria-label="Filtrar por respaldo">
+        <option value="">Todos</option>
+        <option value="el">Con respaldo ElevenLabs</option>
+        <option value="noel">Sin respaldo ElevenLabs</option>
+      </select>
+    </div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Personaje</th><th>Materia</th><th>Página</th><th>Agente D-ID</th><th>ElevenLabs</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+    <p class="count" id="count"></p>
+  </section>
+</div>
+
+<script>
+// Copia de respaldo (sin claves) por si agentes.json no se puede leer, p. ej. al abrir el archivo de forma local.
+const SNAPSHOT = [["Alan_Matematicas","Alan Turing · Matemáticas","v2_agt_VRr-daUT",0],["algebra_alan","Alan Turing · Álgebra","v2_agt_VRr-daUT",0],["analisis_datos_alan","Alan Turing · Análisis de Datos I","v2_agt__YgfdO7n",0],["analisis_estadistico_alan","Alan Turing · Análisis estadístico","v2_agt_uMCQqUae",0],["aplicacion_termodinamica_carnot","Sadi Carnot · Aplicación de la Termodinámica en Sistemas Ingenieriles","v2_agt_XFYCIH8p",0],["calculo_alan","Alan Turing · Cálculo I","v2_agt_VRr-daUT",0],["calculo_ii_turing","Alan Turing · Cálculo II","v2_agt_Yzli8pvw",0],["comportamiento_consumidor_smith","Adam Smith · Comportamiento del consumidor","v2_agt_SHP9kHtT",0],["cultura_digital_alan","Alan Turing · Cultura Digital I","v2_agt_ml8WVFwn",0],["derecho_empresarial_taylor","Frederick Taylor · Derecho empresarial","v2_agt__f3ofJXR",0],["desarrollo_organizacional_lilian","Lillian Gilbreth · Desarrollo organizacional","v2_agt_U6sEOQiM",0],["did-agent","Alan Turing · Página genérica (did-agent)","v2_agt_VRr-daUT",0],["diplomadoIA-cert1-GRG_Darwin","Charles Darwin · Diplomado IA, certificación 1 (GRG)","v2_agt_gaPr05vN",0],["diplomadoIA-cert1-UCC_Darwin","Charles Darwin · Diplomado IA, certificación 1 (UCC)","v2_agt_RVJhy2DF",0],["diplomadoIA-cert1_Darwin","Charles Darwin · Diplomado IA, certificación 1","v2_agt_RVJhy2DF",0],["diplomadoIA-cert2-UCC_UNO","UNO · Diplomado IA, certificación 2 (UCC)","v2_agt_mMFzf-9V",0],["diplomadoIA-cert2_UNO","UNO · Diplomado IA, certificación 2","v2_agt_mMFzf-9V",0],["diplomadoIA-cert3_Alan","Alan Turing · Diplomado IA, certificación 3","v2_agt_fjQgURYR",0],["emprendimiento_innovacion_taylor","Frederick Taylor · Emprendimiento e innovación","v2_agt_JI13MzwP",0],["entorno_economico_smith","Adam Smith · Entorno Económico y Social en los Negocios","v2_agt_zvXKj2ig",0],["estrategia_corporativa_taylor","Frederick Taylor · Estrategia corporativa","v2_agt_G0cscPBj",0],["fisica_curie","Marie Curie · Física","v2_agt_sMGAfnHi",0],["fundamentos_administacion_taylor","Frederick Taylor · Fundamentos de administración","v2_agt_Q4nfeXLj",0],["fundamentos_contabilidad_luca","Luca Pacioli · Fundamentos de contabilidad","v2_agt_oKG1IGUN",0],["fundamentos_economia_smith","Adam Smith · Fundamentos de Economía y Negocios","v2_agt_pE-fb9k-",0],["informatica_alan","Alan Turing · Informática para Ingeniería","v2_agt_GFNPsqDj",0],["ingenieria_productividad_lilian","Lillian Gilbreth · Ingeniería Industrial y Productividad","v2_agt_MaWS5TZU",0],["ingles_uno","UNO · Inglés","v2_agt_2e-JrXUN",0],["introduccion_mercadotecnia_smith","Adam Smith · Introducción a la mercadotecnia","v2_agt_GgEfUL_y",0],["leona","Leona Vicario","v2_agt__10ZAKLZ",0],["leona_vicario","Leona Vicario","v2_agt_eJc2Ju1A",0],["macroeconomia_smith","Adam Smith · Macroeconomía","v2_agt_ClwzzfEP",0],["matematicas_negocios_alan","Alan Turing · Matemáticas para Negocios","v2_agt_0SC_rwW1",0],["mecanica_mecanismos_lilian","Lillian Gilbreth · Mecánica y mecanismos","v2_agt_7Nlxtcp5",0],["modelado_gilbreth","Lillian Gilbreth · Modelado en Ingeniería","v2_agt_fbaCNfbK",0],["planeacion_estrategica_taylor","Frederick Taylor · Planeación estratégica","v2_agt_v0zumO6y",0],["quimica_curie","Marie Curie · Química","v2_agt_sE3Yvhlo",0],["quimica_II_curie","Marie Curie · Química II","v2_agt_Jt9c36WV",0],["sistemas_electromagneticos_faraday","Michael Faraday · Análisis de Sistemas Eléctricos y Electromagnéticos","v2_agt_AbFtyMdz",0],["tecnologia_transformacion_alan","Alan Turing · Tecnología y Transformación Digital","v2_agt_x9BvMVtR",1],["tecnologias_informacion_alan","Alan Turing · Tecnologías de la Información para los Negocios","v2_agt_MwNU8zf7",0],["diplomadoIA-cert2-GRG_UNO","UNO · Diplomado IA, certificación 2, GRG","v2_agt_mMFzf-9V",0],["diplomadoIA-cert3-GRG_Alan","Alan Turing · Diplomado IA, certificación 3, GRG","v2_agt_fjQgURYR",0],["pensamiento_matematico_alan","Alan Turing · Pensamiento Matemático","v2_agt_fjQgURYR",0]];
+const SNAPSHOT_DATE = "19 de octubre de 2026";
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function normalize(list){
+  return list.map(([id, nombre, did, el]) => {
+    const i = nombre.indexOf(" · ");
+    const personaje = i >= 0 ? nombre.slice(0, i).trim() : nombre.trim();
+    let materia = i >= 0 ? nombre.slice(i + 3).trim() : "";
+    const general = !materia || /página genérica/i.test(materia);
+    if (!materia) materia = "Página general";
+    return { id, personaje, materia, did, el: !!el, general };
+  });
+}
+
+async function load(){
+  try {
+    const r = await fetch("agentes.json", { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    const list = Object.entries(d).map(([k, v]) => [k, v.nombre || k, v.did_agent_id || "", (v.elevenlabs_agent_id || "").trim() ? 1 : 0]);
+    document.getElementById("src").innerHTML = "Datos en vivo de <b>agentes.json</b>";
+    return normalize(list);
+  } catch (e) {
+    document.getElementById("src").innerHTML = "Copia guardada del <b>" + SNAPSHOT_DATE + "</b>";
+    return normalize(SNAPSHOT);
+  }
+}
+
+function render(rows){
+  const byP = new Map();
+  rows.forEach(r => { if (!byP.has(r.personaje)) byP.set(r.personaje, []); byP.get(r.personaje).push(r); });
+  const people = [...byP.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], "es"));
+
+  const didCount = {};
+  rows.forEach(r => { if (r.did) didCount[r.did] = (didCount[r.did] || 0) + 1; });
+
+  document.getElementById("headline").textContent =
+    `${rows.length} agentes creados, ${people.length} personajes`;
+  document.getElementById("kDid").textContent = Object.keys(didCount).length;
+  document.getElementById("kEl").textContent = `${rows.filter(r => r.el).length} de ${rows.length}`;
+
+  const roster = document.getElementById("roster");
+  roster.innerHTML = people.map(([p, list], idx) => {
+    const sorted = [...list].sort((a, b) => a.general - b.general || a.materia.localeCompare(b.materia, "es"));
+    const dots = sorted.map(r => `<i class="d${r.el ? " el" : ""}${r.general ? " gen" : ""}" title="${esc(r.materia)}"></i>`).join("");
+    const items = sorted.map(r => {
+      const shared = didCount[r.did] > 1 ? ` <small>· agente D-ID compartido con ${didCount[r.did] - 1} página${didCount[r.did] > 2 ? "s" : ""}</small>` : "";
+      return `<li><i class="d${r.el ? " el" : ""}${r.general ? " gen" : ""}"></i><span>${esc(r.materia)} <small>${esc(r.id)}</small>${shared}${r.el ? ' <span class="tag">ElevenLabs</span>' : ""}</span></li>`;
+    }).join("");
+    return `<div class="row" id="p${idx}">
+      <button aria-expanded="false" aria-controls="dp${idx}">
+        <span class="who">${esc(p)}</span><span class="dots">${dots}</span><span class="n">${list.length}</span>
+      </button>
+      <div class="detail" id="dp${idx}"><ul>${items}</ul></div>
+    </div>`;
+  }).join("");
+  roster.querySelectorAll(".row>button").forEach(b => b.addEventListener("click", () => {
+    const row = b.parentElement, open = row.classList.toggle("open");
+    b.setAttribute("aria-expanded", open);
+  }));
+
+  const tb = document.getElementById("tb"), q = document.getElementById("q"), f = document.getElementById("f");
+  const sortedRows = [...rows].sort((a, b) => a.personaje.localeCompare(b.personaje, "es") || a.materia.localeCompare(b.materia, "es"));
+  function draw(){
+    const t = q.value.trim().toLowerCase();
+    const vis = sortedRows.filter(r =>
+      (!t || (r.personaje + " " + r.materia + " " + r.id).toLowerCase().includes(t)) &&
+      (!f.value || (f.value === "el" ? r.el : !r.el)));
+    tb.innerHTML = vis.map(r => `<tr><td>${esc(r.personaje)}</td><td>${esc(r.materia)}</td><td><code>${esc(r.id)}</code></td><td><code>${esc(r.did)}</code></td><td class="${r.el ? "yes" : "no"}">${r.el ? "Sí" : "No"}</td></tr>`).join("")
+      || `<tr><td colspan="5" class="no">Ningún agente coincide con la búsqueda.</td></tr>`;
+    document.getElementById("count").textContent = `Mostrando ${vis.length} de ${rows.length} agentes`;
+  }
+  q.addEventListener("input", draw); f.addEventListener("change", draw); draw();
+}
+
+load().then(rows => render(rows.filter(r => !r.general)));
+</script>
+</body>
+</html>
