@@ -45,7 +45,7 @@
     "nombre": "Adam Smith · Comportamiento del consumidor",
     "did_agent_id": "v2_agt_SHP9kHtT",
     "did_client_key": "ck_2H0f_WDRQwMw7-QLogcqM",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_4501m5d2ckpveefvqxpy2b9bjfd6"
   },
   "cultura_digital_alan": {
     "nombre": "Alan Turing · Cultura Digital I",
@@ -237,13 +237,13 @@
     "nombre": "Alan Turing · Tecnología y Transformación Digital",
     "did_agent_id": "v2_agt_x9BvMVtR",
     "did_client_key": "ck_au_-fIbjgB1qT6onuuo7Z",
-    "elevenlabs_agent_id": "agent_4301m248zp20ejfvys40146npy4e"
+    "elevenlabs_agent_id": "agent_0801m5d612p6epav8d3yzfcdbydj"
   },
   "tecnologias_informacion_alan": {
     "nombre": "Alan Turing · Tecnologías de la Información para los Negocios",
     "did_agent_id": "v2_agt_MwNU8zf7",
     "did_client_key": "ck_X82TF9eBQOZJkUx4yv3L1",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_1601m5d2swz9e0rtvv0gzt65rvaj"
   },
   "diplomadoIA-cert2-GRG_UNO": {
     "nombre": "UNO · Diplomado IA, certificación 2, GRG",
