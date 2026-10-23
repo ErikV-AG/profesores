@@ -59,8 +59,8 @@ Para pasarlo a la lista sin que su URL deje de funcionar:
    **Delete file** → **Commit changes**). Ahora sí se publica, y la página
    sale de la lista con la misma URL.
 
-También detiene la publicación un `.html` en la raíz llamado `lista.html` o
-`404.html`, porque esas páginas las genera la construcción.
+También detiene la publicación un `.html` en la raíz llamado `lista.html`,
+`tablero.html` o `404.html`, porque esas páginas las genera la construcción.
 
 ## ¿Se publicó?
 
@@ -87,6 +87,10 @@ tiene el formato que va en Rise:
   width="100%" height="350" frameborder="0"
   allow="microphone; camera; autoplay" allowfullscreen></iframe>
 ```
+
+**https://erikv-ag.github.io/profesores/tablero.html** resume los agentes por
+personaje y materia, con la fecha de la última publicación. Ninguna de las
+dos páginas lleva las keys de D-ID.
 
 ## Qué hace la compuerta
 

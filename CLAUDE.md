@@ -37,6 +37,9 @@ cambia a un agente de voz de ElevenLabs.
 - `agentes.json` — la lista. Fuente única de datos de cada agente.
 - `src/plantilla.html`, `src/agente.js`, `src/agente.css` — página, lógica
   y estilo compartidos por todos los agentes.
+- `src/tablero.html` — tablero de agentes; `construir.py` rellena
+  `{{AGENTES}}` (sin keys) y `{{FECHA}}` (día de la construcción) y genera
+  `_site/tablero.html`.
 - `scripts/construir.py` — valida la lista y genera `_site/`.
 - `scripts/urls_publicadas.txt` — las 42 páginas que existían al migrar;
   la construcción aborta si falta alguna en `_site/`.

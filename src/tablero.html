@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
 <title>Tablero de agentes · Profesores</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,6 +38,7 @@ header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-
 header p{margin:0;color:var(--muted);font-size:14px}
 .src{font-size:13px;color:var(--muted)}
 .src b{font-weight:600;color:var(--text)}
+.src a{color:var(--ink);font-weight:600}
 .headline{font-size:clamp(34px,6vw,64px);font-weight:800;line-height:1.02;letter-spacing:-.02em;max-width:16ch}
 .sub{display:flex;flex-wrap:wrap;gap:28px;margin:22px 0 44px;color:var(--muted);font-size:15px}
 .sub strong{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:28px;color:var(--text);font-weight:600;line-height:1.1}
@@ -86,7 +88,7 @@ td code{font-size:13px;color:var(--muted)}
 <div class="wrap">
   <header>
     <p>Profesores · Academia Global</p>
-    <p class="src" id="src">Cargando agentes…</p>
+    <p class="src">Datos al <b>{{FECHA}}</b> · <a href="lista.html">Lista de agentes</a></p>
   </header>
 
   <h1 class="headline" id="headline">…</h1>
@@ -126,11 +128,9 @@ td code{font-size:13px;color:var(--muted)}
   </section>
 </div>
 
+<!-- Lo rellena scripts/construir.py desde agentes.json: [id, nombre, did_agent_id, tiene_elevenlabs]. Sin keys. -->
+<script id="datos-tablero" type="application/json">{{AGENTES}}</script>
 <script>
-// Copia de respaldo (sin claves) por si agentes.json no se puede leer, p. ej. al abrir el archivo de forma local.
-const SNAPSHOT = [["Alan_Matematicas","Alan Turing · Matemáticas","v2_agt_VRr-daUT",0],["algebra_alan","Alan Turing · Álgebra","v2_agt_VRr-daUT",0],["analisis_datos_alan","Alan Turing · Análisis de Datos I","v2_agt__YgfdO7n",0],["analisis_estadistico_alan","Alan Turing · Análisis estadístico","v2_agt_uMCQqUae",0],["aplicacion_termodinamica_carnot","Sadi Carnot · Aplicación de la Termodinámica en Sistemas Ingenieriles","v2_agt_XFYCIH8p",0],["calculo_alan","Alan Turing · Cálculo I","v2_agt_VRr-daUT",0],["calculo_ii_turing","Alan Turing · Cálculo II","v2_agt_Yzli8pvw",0],["comportamiento_consumidor_smith","Adam Smith · Comportamiento del consumidor","v2_agt_SHP9kHtT",0],["cultura_digital_alan","Alan Turing · Cultura Digital I","v2_agt_ml8WVFwn",0],["derecho_empresarial_taylor","Frederick Taylor · Derecho empresarial","v2_agt__f3ofJXR",0],["desarrollo_organizacional_lilian","Lillian Gilbreth · Desarrollo organizacional","v2_agt_U6sEOQiM",0],["did-agent","Alan Turing · Página genérica (did-agent)","v2_agt_VRr-daUT",0],["diplomadoIA-cert1-GRG_Darwin","Charles Darwin · Diplomado IA, certificación 1 (GRG)","v2_agt_gaPr05vN",0],["diplomadoIA-cert1-UCC_Darwin","Charles Darwin · Diplomado IA, certificación 1 (UCC)","v2_agt_RVJhy2DF",0],["diplomadoIA-cert1_Darwin","Charles Darwin · Diplomado IA, certificación 1","v2_agt_RVJhy2DF",0],["diplomadoIA-cert2-UCC_UNO","UNO · Diplomado IA, certificación 2 (UCC)","v2_agt_mMFzf-9V",0],["diplomadoIA-cert2_UNO","UNO · Diplomado IA, certificación 2","v2_agt_mMFzf-9V",0],["diplomadoIA-cert3_Alan","Alan Turing · Diplomado IA, certificación 3","v2_agt_fjQgURYR",0],["emprendimiento_innovacion_taylor","Frederick Taylor · Emprendimiento e innovación","v2_agt_JI13MzwP",0],["entorno_economico_smith","Adam Smith · Entorno Económico y Social en los Negocios","v2_agt_zvXKj2ig",0],["estrategia_corporativa_taylor","Frederick Taylor · Estrategia corporativa","v2_agt_G0cscPBj",0],["fisica_curie","Marie Curie · Física","v2_agt_sMGAfnHi",0],["fundamentos_administacion_taylor","Frederick Taylor · Fundamentos de administración","v2_agt_Q4nfeXLj",0],["fundamentos_contabilidad_luca","Luca Pacioli · Fundamentos de contabilidad","v2_agt_oKG1IGUN",0],["fundamentos_economia_smith","Adam Smith · Fundamentos de Economía y Negocios","v2_agt_pE-fb9k-",0],["informatica_alan","Alan Turing · Informática para Ingeniería","v2_agt_GFNPsqDj",0],["ingenieria_productividad_lilian","Lillian Gilbreth · Ingeniería Industrial y Productividad","v2_agt_MaWS5TZU",0],["ingles_uno","UNO · Inglés","v2_agt_2e-JrXUN",0],["introduccion_mercadotecnia_smith","Adam Smith · Introducción a la mercadotecnia","v2_agt_GgEfUL_y",0],["leona","Leona Vicario","v2_agt__10ZAKLZ",0],["leona_vicario","Leona Vicario","v2_agt_eJc2Ju1A",0],["macroeconomia_smith","Adam Smith · Macroeconomía","v2_agt_ClwzzfEP",0],["matematicas_negocios_alan","Alan Turing · Matemáticas para Negocios","v2_agt_0SC_rwW1",0],["mecanica_mecanismos_lilian","Lillian Gilbreth · Mecánica y mecanismos","v2_agt_7Nlxtcp5",0],["modelado_gilbreth","Lillian Gilbreth · Modelado en Ingeniería","v2_agt_fbaCNfbK",0],["planeacion_estrategica_taylor","Frederick Taylor · Planeación estratégica","v2_agt_v0zumO6y",0],["quimica_curie","Marie Curie · Química","v2_agt_sE3Yvhlo",0],["quimica_II_curie","Marie Curie · Química II","v2_agt_Jt9c36WV",0],["sistemas_electromagneticos_faraday","Michael Faraday · Análisis de Sistemas Eléctricos y Electromagnéticos","v2_agt_AbFtyMdz",0],["tecnologia_transformacion_alan","Alan Turing · Tecnología y Transformación Digital","v2_agt_x9BvMVtR",1],["tecnologias_informacion_alan","Alan Turing · Tecnologías de la Información para los Negocios","v2_agt_MwNU8zf7",0],["diplomadoIA-cert2-GRG_UNO","UNO · Diplomado IA, certificación 2, GRG","v2_agt_mMFzf-9V",0],["diplomadoIA-cert3-GRG_Alan","Alan Turing · Diplomado IA, certificación 3, GRG","v2_agt_fjQgURYR",0],["pensamiento_matematico_alan","Alan Turing · Pensamiento Matemático","v2_agt_fjQgURYR",0]];
-const SNAPSHOT_DATE = "19 de octubre de 2026";
-
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 function normalize(list){
@@ -142,20 +142,6 @@ function normalize(list){
     if (!materia) materia = "Página general";
     return { id, personaje, materia, did, el: !!el, general };
   });
-}
-
-async function load(){
-  try {
-    const r = await fetch("agentes.json", { cache: "no-store" });
-    if (!r.ok) throw new Error(r.status);
-    const d = await r.json();
-    const list = Object.entries(d).map(([k, v]) => [k, v.nombre || k, v.did_agent_id || "", (v.elevenlabs_agent_id || "").trim() ? 1 : 0]);
-    document.getElementById("src").innerHTML = "Datos en vivo de <b>agentes.json</b>";
-    return normalize(list);
-  } catch (e) {
-    document.getElementById("src").innerHTML = "Copia guardada del <b>" + SNAPSHOT_DATE + "</b>";
-    return normalize(SNAPSHOT);
-  }
 }
 
 function render(rows){
@@ -205,7 +191,8 @@ function render(rows){
   q.addEventListener("input", draw); f.addEventListener("change", draw); draw();
 }
 
-load().then(rows => render(rows.filter(r => !r.general)));
+const datos = JSON.parse(document.getElementById("datos-tablero").textContent);
+render(normalize(datos).filter(r => !r.general));
 </script>
 </body>
 </html>
