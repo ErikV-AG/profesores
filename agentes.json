@@ -45,7 +45,7 @@
     "nombre": "Adam Smith · Comportamiento del consumidor",
     "did_agent_id": "v2_agt_SHP9kHtT",
     "did_client_key": "ck_2H0f_WDRQwMw7-QLogcqM",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_4501m5d2ckpveefvqxpy2b9bjfd6"
   },
   "cultura_digital_alan": {
     "nombre": "Alan Turing · Cultura Digital I",
@@ -237,13 +237,13 @@
     "nombre": "Alan Turing · Tecnología y Transformación Digital",
     "did_agent_id": "v2_agt_x9BvMVtR",
     "did_client_key": "ck_au_-fIbjgB1qT6onuuo7Z",
-    "elevenlabs_agent_id": "agent_4301m248zp20ejfvys40146npy4e"
+    "elevenlabs_agent_id": "agent_0801m5d612p6epav8d3yzfcdbydj"
   },
   "tecnologias_informacion_alan": {
     "nombre": "Alan Turing · Tecnologías de la Información para los Negocios",
     "did_agent_id": "v2_agt_MwNU8zf7",
     "did_client_key": "ck_X82TF9eBQOZJkUx4yv3L1",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_1601m5d2swz9e0rtvv0gzt65rvaj"
   },
   "diplomadoIA-cert2-GRG_UNO": {
     "nombre": "UNO · Diplomado IA, certificación 2, GRG",
@@ -262,5 +262,23 @@
     "did_agent_id": "v2_agt_fjQgURYR",
     "did_client_key": "ck_jNGs4pZqYMLKHXdGU-UN-",
     "elevenlabs_agent_id": ""
+  },
+  "mercadotecnia_comercio_smith": {
+    "nombre": "Alan Turing · Pensamiento Matemático",
+    "did_agent_id": "v2_agt_AJmOSPmK",
+    "did_client_key": "ck_2SeP02E7yH-Z8N_MXUZDu",
+    "elevenlabs_agent_id": "agent_2201m5j8zzc5efhv5x366jtpmzta"
+  },
+  "ingenieria_negocios_taylor": {
+    "nombre": "Ingeniería de Negocios y Administración Taylor",
+    "did_agent_id": "v2_agt_DDsbbe2R",
+    "did_client_key": "ck_HLVoWwX1w-Z8TBjKNJCiq",
+    "elevenlabs_agent_id": "agent_9801m5jevtk5erarawkqq3aezs2f"
+  },
+  "ingenieria_materiales_lilian": {
+    "nombre": "Ingeniería de materiales",
+    "did_agent_id": "v2_agt_Yy2D7LKu",
+    "did_client_key": "ck_Qlx8AV308qzdmYnfdPSD1",
+    "elevenlabs_agent_id": "agent_6901m5jdmf1he64sx4fkrwmgd3pq"
   }
 }
