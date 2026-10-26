@@ -55,6 +55,9 @@ AGENTES_PRUEBA = ['tecnologia_transformacion_alan', 'calculo_alan', 'fisica_curi
 # chocaría con un archivo existente.
 IDS_RESERVADOS = {'benito', 'lista', 'tablero', '404', 'index', 'agente'}
 
+# Separa personaje y materia en "nombre": "Alan Turing · Cálculo I".
+SEPARADOR_NOMBRE = ' · '
+
 CAMPOS = ('nombre', 'did_agent_id', 'did_client_key', 'elevenlabs_agent_id')
 PATRON_ID = re.compile(r'^[A-Za-z0-9_-]+$')
 PATRON_RESTO = re.compile(r'^[A-Za-z0-9_-]+$')
@@ -263,6 +266,10 @@ def validar_entradas(reg, agentes, texto):
         if not isinstance(entrada.get('nombre'), str) or not entrada.get('nombre', '').strip():
             reg.aviso('%s: no tiene "nombre"; en la página y en lista.html se mostrará el id' % quien,
                       nombre, linea)
+        elif SEPARADOR_NOMBRE not in entrada['nombre']:
+            reg.aviso('%s: el nombre "%s" no tiene el separador "%s" (Personaje%sMateria); el tablero '
+                      'no lo cuenta como materia' % (quien, entrada['nombre'], SEPARADOR_NOMBRE.strip(),
+                                                     SEPARADOR_NOMBRE), nombre, linea)
 
 
 def leer_urls_publicadas(reg):
@@ -288,6 +295,12 @@ def html_sueltos():
     tal_cual = {c for c in COPIAS_TAL_CUAL if c.endswith('.html')}
     return sorted((p.name for p in RAIZ.glob('*.html') if p.is_file() and p.name not in tal_cual),
                   key=str.lower)
+
+
+def fuera_de_lista(agentes):
+    """Los .html sueltos que se publican con aviso: no están en agentes.json
+    ni chocan con una página generada. El tablero los muestra aparte."""
+    return [n for n in html_sueltos() if n[:-5] not in agentes and n not in PAGINAS_GENERADAS]
 
 
 def validar_html_sueltos(reg, agentes):
@@ -632,7 +645,7 @@ def generar_lista_html(agentes):
     return LISTA_HTML % {'total': len(agentes), 'filas': '\n'.join(filas), 'generado': generado}
 
 
-MARCAS_TABLERO = ('{{AGENTES}}', '{{FECHA}}')
+MARCAS_TABLERO = ('{{AGENTES}}', '{{SUELTOS}}', '{{FECHA}}')
 
 MESES = ('enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
          'septiembre', 'octubre', 'noviembre', 'diciembre')
@@ -657,7 +670,8 @@ def fecha_construccion():
 
 def generar_tablero(tablero, agentes):
     """Rellena src/tablero.html. Solo lleva id, nombre, agent id de D-ID y
-    si tiene ElevenLabs: nunca la did_client_key."""
+    si tiene ElevenLabs (nunca la did_client_key), más los .html fuera de
+    la lista."""
     datos = []
     for ident, entrada in agentes.items():
         datos.append([
@@ -668,6 +682,7 @@ def generar_tablero(tablero, agentes):
         ])
     reemplazos = {
         '{{AGENTES}}': json_embebido(datos, indent=None),
+        '{{SUELTOS}}': json_embebido(fuera_de_lista(agentes), indent=None),
         '{{FECHA}}': html.escape(fecha_construccion()),
     }
     # Un solo paso, como en pagina_agente.

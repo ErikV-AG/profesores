@@ -78,6 +78,9 @@ td code{font-size:13px;color:var(--muted)}
 .yes{color:var(--ochre);font-weight:600}
 .no{color:var(--muted)}
 .count{font-size:13px;color:var(--muted);margin-top:8px}
+.loose{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.loose li{padding:10px 4px;border-bottom:1px solid var(--line);font-size:14.5px}
+.loose a{color:var(--ink);font-weight:600}
 @media (max-width:620px){
   .row>button{grid-template-columns:1fr auto;grid-template-areas:"who n" "dots dots";gap:8px 12px}
   .who{grid-area:who}.dots{grid-area:dots}.n{grid-area:n}
@@ -126,10 +129,18 @@ td code{font-size:13px;color:var(--muted)}
     </div>
     <p class="count" id="count"></p>
   </section>
+
+  <section>
+    <h2>Fuera de la lista</h2>
+    <p class="hint">Páginas .html subidas directo a la raíz, sin pasar por agentes.json. Se publican tal cual, sin respaldo ElevenLabs.</p>
+    <ul class="loose" id="loose"></ul>
+  </section>
 </div>
 
 <!-- Lo rellena scripts/construir.py desde agentes.json: [id, nombre, did_agent_id, tiene_elevenlabs]. Sin keys. -->
 <script id="datos-tablero" type="application/json">{{AGENTES}}</script>
+<!-- Los .html de la raíz que no están en agentes.json (los del aviso de página suelta). -->
+<script id="datos-sueltos" type="application/json">{{SUELTOS}}</script>
 <script>
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -191,8 +202,14 @@ function render(rows){
   q.addEventListener("input", draw); f.addEventListener("change", draw); draw();
 }
 
+function renderLoose(pages){
+  document.getElementById("loose").innerHTML = pages.map(p => `<li><a href="${esc(p)}">${esc(p)}</a></li>`).join("")
+    || `<li class="no">Ninguna: todas las páginas están en agentes.json.</li>`;
+}
+
 const datos = JSON.parse(document.getElementById("datos-tablero").textContent);
 render(normalize(datos).filter(r => !r.general));
+renderLoose(JSON.parse(document.getElementById("datos-sueltos").textContent));
 </script>
 </body>
 </html>
