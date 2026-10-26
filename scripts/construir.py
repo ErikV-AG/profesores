@@ -32,6 +32,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -52,7 +53,10 @@ AGENTES_PRUEBA = ['tecnologia_transformacion_alan', 'calculo_alan', 'fisica_curi
 
 # Nombres que ya usa el sitio: un agente con alguno de estos ids
 # chocaría con un archivo existente.
-IDS_RESERVADOS = {'benito', 'lista', '404', 'index', 'agente'}
+IDS_RESERVADOS = {'benito', 'lista', 'tablero', '404', 'index', 'agente'}
+
+# Separa personaje y materia en "nombre": "Alan Turing · Cálculo I".
+SEPARADOR_NOMBRE = ' · '
 
 CAMPOS = ('nombre', 'did_agent_id', 'did_client_key', 'elevenlabs_agent_id')
 PATRON_ID = re.compile(r'^[A-Za-z0-9_-]+$')
@@ -262,6 +266,10 @@ def validar_entradas(reg, agentes, texto):
         if not isinstance(entrada.get('nombre'), str) or not entrada.get('nombre', '').strip():
             reg.aviso('%s: no tiene "nombre"; en la página y en lista.html se mostrará el id' % quien,
                       nombre, linea)
+        elif SEPARADOR_NOMBRE not in entrada['nombre']:
+            reg.aviso('%s: el nombre "%s" no tiene el separador "%s" (Personaje%sMateria); el tablero '
+                      'no lo cuenta como materia' % (quien, entrada['nombre'], SEPARADOR_NOMBRE.strip(),
+                                                     SEPARADOR_NOMBRE), nombre, linea)
 
 
 def leer_urls_publicadas(reg):
@@ -278,7 +286,7 @@ def leer_urls_publicadas(reg):
 
 # Páginas que genera la construcción: un .html suelto en la raíz con
 # alguno de estos nombres chocaría con ellas.
-PAGINAS_GENERADAS = {'lista.html', '404.html'}
+PAGINAS_GENERADAS = {'lista.html', 'tablero.html', '404.html'}
 
 
 def html_sueltos():
@@ -287,6 +295,12 @@ def html_sueltos():
     tal_cual = {c for c in COPIAS_TAL_CUAL if c.endswith('.html')}
     return sorted((p.name for p in RAIZ.glob('*.html') if p.is_file() and p.name not in tal_cual),
                   key=str.lower)
+
+
+def fuera_de_lista(agentes):
+    """Los .html sueltos que se publican con aviso: no están en agentes.json
+    ni chocan con una página generada. El tablero los muestra aparte."""
+    return [n for n in html_sueltos() if n[:-5] not in agentes and n not in PAGINAS_GENERADAS]
 
 
 def validar_html_sueltos(reg, agentes):
@@ -447,11 +461,11 @@ def huella(contenido):
     return hashlib.sha256(contenido).hexdigest()[:10]
 
 
-def json_embebido(datos):
+def json_embebido(datos, indent=2):
     """JSON seguro dentro de <script>: ningún '<' puede cerrar la etiqueta
     (</script>) ni abrir un comentario (<!--). \\u003c sigue siendo JSON
     válido, así que JSON.parse lo lee igual."""
-    texto = json.dumps(datos, ensure_ascii=False, indent=2)
+    texto = json.dumps(datos, ensure_ascii=False, indent=indent)
     return (texto.replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
             .replace('\u2028', '\\u2028').replace('\u2029', '\\u2029'))
 
@@ -525,6 +539,7 @@ LISTA_HTML = '''<!DOCTYPE html>
 <body>
 <main>
   <h1>Agentes publicados</h1>
+  <p><a href="tablero.html">Ver el tablero de agentes</a></p>
   <p>%(total)d agentes. «Copiar iframe» copia el código para pegar en Rise (bloque Multimedia → Código insertado).
      Esta lista se genera sola desde <code>agentes.json</code> en cada publicación%(generado)s.</p>
   <input type="search" id="filtro" placeholder="Buscar por nombre o id…" aria-label="Buscar agente">
@@ -630,8 +645,53 @@ def generar_lista_html(agentes):
     return LISTA_HTML % {'total': len(agentes), 'filas': '\n'.join(filas), 'generado': generado}
 
 
+MARCAS_TABLERO = ('{{AGENTES}}', '{{SUELTOS}}', '{{FECHA}}')
+
+MESES = ('enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
+         'septiembre', 'octubre', 'noviembre', 'diciembre')
+
+
+def leer_tablero(reg):
+    tablero = (SRC / 'tablero.html').read_text(encoding='utf-8')
+    for marca in MARCAS_TABLERO:
+        n = tablero.count(marca)
+        if n != 1:
+            reg.error('src/tablero.html debe tener %s exactamente una vez (tiene %d)' % (marca, n),
+                      'src/tablero.html')
+    return tablero
+
+
+def fecha_construccion():
+    """Fecha de hoy en el centro de México (UTC-6, sin horario de verano
+    desde 2022), en español: «19 de octubre de 2026»."""
+    hoy = datetime.now(timezone(timedelta(hours=-6)))
+    return '%d de %s de %d' % (hoy.day, MESES[hoy.month - 1], hoy.year)
+
+
+def generar_tablero(tablero, agentes):
+    """Rellena src/tablero.html. Solo lleva id, nombre, agent id de D-ID y
+    si tiene ElevenLabs (nunca la did_client_key), más los .html fuera de
+    la lista."""
+    datos = []
+    for ident, entrada in agentes.items():
+        datos.append([
+            ident,
+            (entrada.get('nombre') or '').strip() or ident,
+            entrada['did_agent_id'],
+            bool(entrada.get('elevenlabs_agent_id')),
+        ])
+    reemplazos = {
+        '{{AGENTES}}': json_embebido(datos, indent=None),
+        '{{SUELTOS}}': json_embebido(fuera_de_lista(agentes), indent=None),
+        '{{FECHA}}': html.escape(fecha_construccion()),
+    }
+    # Un solo paso, como en pagina_agente.
+    return re.sub(r'\{\{[A-Z]+\}\}', lambda m: reemplazos.get(m.group(0), m.group(0)), tablero)
+
+
 def construir_sitio(reg, agentes):
     plantilla, js, css = leer_fuentes(reg)
+    tablero = leer_tablero(reg)
     if reg.errores:
         return False
 
@@ -641,6 +701,7 @@ def construir_sitio(reg, agentes):
 
     escribir_paginas(SALIDA, plantilla, js, css, agentes)
     (SALIDA / 'lista.html').write_text(generar_lista_html(agentes), encoding='utf-8')
+    (SALIDA / 'tablero.html').write_text(generar_tablero(tablero, agentes), encoding='utf-8')
     (SALIDA / '404.html').write_text(PAGINA_404, encoding='utf-8')
     (SALIDA / '.nojekyll').write_text('', encoding='utf-8')
     (SALIDA / 'ids-publicados.json').write_text(
@@ -678,9 +739,21 @@ def verificar_sitio(reg, agentes):
             if '"%s"' % entrada[campo] not in contenido:
                 reg.error('%s no trae embebido su %s' % (ruta.name, campo))
 
-    for nombre in ('agente.js', 'agente.css', 'lista.html', '404.html', '.nojekyll', 'ids-publicados.json'):
+    for nombre in ('agente.js', 'agente.css', 'lista.html', 'tablero.html', '404.html', '.nojekyll',
+                   'ids-publicados.json'):
         if not (SALIDA / nombre).is_file():
             reg.error('falta %s en _site/' % nombre)
+
+    ruta = SALIDA / 'tablero.html'
+    if ruta.is_file():
+        contenido = ruta.read_text(encoding='utf-8')
+        if '<meta name="robots" content="noindex">' not in contenido:
+            reg.error('tablero.html no trae <meta name="robots" content="noindex">')
+        if re.search(r'\{\{[A-Z]+\}\}', contenido):
+            reg.error('tablero.html quedó con una marca {{...}} sin rellenar')
+        for ident, entrada in agentes.items():
+            if entrada['did_client_key'] in contenido:
+                reg.error('tablero.html trae la did_client_key del agente "%s"; no debe llevar keys' % ident)
 
     for nombre in html_sueltos():
         copia = SALIDA / nombre

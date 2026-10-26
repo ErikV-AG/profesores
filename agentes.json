@@ -264,19 +264,19 @@
     "elevenlabs_agent_id": ""
   },
   "mercadotecnia_comercio_smith": {
-    "nombre": "Alan Turing · Pensamiento Matemático",
+    "nombre": "Adam Smith · Mercadotecnia y Comercio",
     "did_agent_id": "v2_agt_AJmOSPmK",
     "did_client_key": "ck_2SeP02E7yH-Z8N_MXUZDu",
     "elevenlabs_agent_id": "agent_2201m5j8zzc5efhv5x366jtpmzta"
   },
   "ingenieria_negocios_taylor": {
-    "nombre": "Ingeniería de Negocios y Administración Taylor",
+    "nombre": "Frederick Taylor · Ingeniería de Negocios y Administración",
     "did_agent_id": "v2_agt_DDsbbe2R",
     "did_client_key": "ck_HLVoWwX1w-Z8TBjKNJCiq",
     "elevenlabs_agent_id": "agent_9801m5jevtk5erarawkqq3aezs2f"
   },
   "ingenieria_materiales_lilian": {
-    "nombre": "Ingeniería de materiales",
+    "nombre": "Lillian Gilbreth · Ingeniería de Materiales",
     "did_agent_id": "v2_agt_Yy2D7LKu",
     "did_client_key": "ck_Qlx8AV308qzdmYnfdPSD1",
     "elevenlabs_agent_id": "agent_6901m5jdmf1he64sx4fkrwmgd3pq"
