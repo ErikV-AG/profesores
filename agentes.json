@@ -15,31 +15,31 @@
     "nombre": "Alan Turing · Análisis de Datos I",
     "did_agent_id": "v2_agt__YgfdO7n",
     "did_client_key": "ck_zGdmq_elN2yjBpAQjKMgP",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_4901m4y1y7n4fensj6735cq8x5pa"
   },
   "analisis_estadistico_alan": {
     "nombre": "Alan Turing · Análisis estadístico",
     "did_agent_id": "v2_agt_uMCQqUae",
     "did_client_key": "ck_CdB75wYA7a2B8MuXkbk9O",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_6901m4xtpsjnfr7v7jbzrcdcvzn6"
   },
   "aplicacion_termodinamica_carnot": {
     "nombre": "Sadi Carnot · Aplicación de la Termodinámica en Sistemas Ingenieriles",
     "did_agent_id": "v2_agt_XFYCIH8p",
     "did_client_key": "ck_mNllhdenXIL041Idwu_aq",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_8801m5jmbc7qe12vedzyc01xgnmy"
   },
   "calculo_alan": {
     "nombre": "Alan Turing · Cálculo I",
     "did_agent_id": "v2_agt_VRr-daUT",
     "did_client_key": "ck_j4tRwGC0uPBeVPavOeiyA",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_1901m5k0yhfxe139g7r8e9q82tfq"
   },
   "calculo_ii_turing": {
     "nombre": "Alan Turing · Cálculo II",
     "did_agent_id": "v2_agt_Yzli8pvw",
     "did_client_key": "ck_z3vmkx66Bpa_m3X8sNlLU",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_2201m4y6yeeff8zakr035863syjc"
   },
   "comportamiento_consumidor_smith": {
     "nombre": "Adam Smith · Comportamiento del consumidor",
@@ -51,19 +51,19 @@
     "nombre": "Alan Turing · Cultura Digital I",
     "did_agent_id": "v2_agt_ml8WVFwn",
     "did_client_key": "ck_GgCJ_FF7GIMVrRia8-Prr",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_2901m4y2ysmqexpbfyr92p70yz7m"
   },
   "derecho_empresarial_taylor": {
     "nombre": "Frederick Taylor · Derecho empresarial",
     "did_agent_id": "v2_agt__f3ofJXR",
     "did_client_key": "ck_J40xne-3dH0cx9ixL_omD",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_3901m5n5hnxgfbcsmba3r67zwkp3"
   },
   "desarrollo_organizacional_lilian": {
     "nombre": "Lillian Gilbreth · Desarrollo organizacional",
     "did_agent_id": "v2_agt_U6sEOQiM",
     "did_client_key": "ck_nsUhi8aeNCVm44P0Rq1op",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_3401m5jy0ckweqw84ypatnd5c8nm"
   },
   "did-agent": {
     "nombre": "Alan Turing · Página genérica (did-agent)",
@@ -111,67 +111,67 @@
     "nombre": "Frederick Taylor · Emprendimiento e innovación",
     "did_agent_id": "v2_agt_JI13MzwP",
     "did_client_key": "ck_OssO31treKYV-NVMiALUq",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_7101m5jzg8hnetraf35nxk01855h"
   },
   "entorno_economico_smith": {
     "nombre": "Adam Smith · Entorno Económico y Social en los Negocios",
     "did_agent_id": "v2_agt_zvXKj2ig",
     "did_client_key": "ck_2H6cF9tHJ8faXk20ZgtuH",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_2901m5kay4dyfejs5vmjnszy3h83"
   },
   "estrategia_corporativa_taylor": {
     "nombre": "Frederick Taylor · Estrategia corporativa",
     "did_agent_id": "v2_agt_G0cscPBj",
     "did_client_key": "ck__s_emcV-eSj5wgY6UC6RH",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_2301m5k0d4zxfactsxj7pbtng42s"
   },
   "fisica_curie": {
     "nombre": "Marie Curie · Física",
     "did_agent_id": "v2_agt_sMGAfnHi",
     "did_client_key": "ck_AoCwXLaqIa6-L9e28IVeo",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_9801m4y7mhjke28bvqzkpzzzcpew"
   },
   "fundamentos_administacion_taylor": {
     "nombre": "Frederick Taylor · Fundamentos de administración",
     "did_agent_id": "v2_agt_Q4nfeXLj",
     "did_client_key": "ck_zpyxtw32URHpo7R4qqRIG",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_4101m5k191tsfqqsegz9cftkd7wn"
   },
   "fundamentos_contabilidad_luca": {
     "nombre": "Luca Pacioli · Fundamentos de contabilidad",
     "did_agent_id": "v2_agt_oKG1IGUN",
     "did_client_key": "ck_hwd6WH6Ah0_ij_IdO4SjO",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_8601m5ka66y1fza8z5z0ejyp1sm5"
   },
   "fundamentos_economia_smith": {
     "nombre": "Adam Smith · Fundamentos de Economía y Negocios",
     "did_agent_id": "v2_agt_pE-fb9k-",
     "did_client_key": "ck_lPg4Z418rf06mrUrdl1-G",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_5101m5d3vp0efabtxwdjenk3gmb4"
   },
   "informatica_alan": {
     "nombre": "Alan Turing · Informática para Ingeniería",
     "did_agent_id": "v2_agt_GFNPsqDj",
     "did_client_key": "ck_QX6U7UxoIj9JkSmAdgkQR",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_6601m5kagjzcfb4rr3ds4jcw983w"
   },
   "ingenieria_productividad_lilian": {
     "nombre": "Lillian Gilbreth · Ingeniería Industrial y Productividad",
     "did_agent_id": "v2_agt_MaWS5TZU",
     "did_client_key": "ck_bNhSNE5IKgqgq76QIoeze",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_0101m243es8nf93rx65gh1h39nv5"
   },
   "ingles_uno": {
     "nombre": "UNO · Inglés",
     "did_agent_id": "v2_agt_2e-JrXUN",
     "did_client_key": "ck_hJjiPHxUXNNosuMb6KUsT",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_6001m5kbe9aaenwawycphef8bh1e"
   },
   "introduccion_mercadotecnia_smith": {
     "nombre": "Adam Smith · Introducción a la mercadotecnia",
     "did_agent_id": "v2_agt_GgEfUL_y",
     "did_client_key": "ck_Hk564qOSs26UdGrUypF3S",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_4101m5n5369dfe0bsr8dhq3xajz7"
   },
   "leona": {
     "nombre": "Leona Vicario",
@@ -189,49 +189,49 @@
     "nombre": "Adam Smith · Macroeconomía",
     "did_agent_id": "v2_agt_ClwzzfEP",
     "did_client_key": "ck_E90dhZxMZ9y0gBamXW1Xh",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_2101m4y0rpr1eqp9wpxs91rs7e6t"
   },
   "matematicas_negocios_alan": {
     "nombre": "Alan Turing · Matemáticas para Negocios",
     "did_agent_id": "v2_agt_0SC_rwW1",
     "did_client_key": "ck_COIwBrYiMGo0M8gQfndRK",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_2701m5n5c5zwetp86qnp3zy0ngzj"
   },
   "mecanica_mecanismos_lilian": {
     "nombre": "Lillian Gilbreth · Mecánica y mecanismos",
     "did_agent_id": "v2_agt_7Nlxtcp5",
     "did_client_key": "ck_VfKmTSNZwzBoa7ChYZdIu",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_8001m5n5sm8pf06v6x7erkd65e5p"
   },
   "modelado_gilbreth": {
     "nombre": "Lillian Gilbreth · Modelado en Ingeniería",
     "did_agent_id": "v2_agt_fbaCNfbK",
     "did_client_key": "ck_FUo4TTeg_2jARcDJ89bsO",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_6101m5n4t19cevjr5tge9egvba9c"
   },
   "planeacion_estrategica_taylor": {
     "nombre": "Frederick Taylor · Planeación estratégica",
     "did_agent_id": "v2_agt_v0zumO6y",
     "did_client_key": "ck_VGIop46_AxcAG9xt6LUfg",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_1801m4xzyemcfrcawj2989na2611"
   },
   "quimica_curie": {
     "nombre": "Marie Curie · Química",
     "did_agent_id": "v2_agt_sE3Yvhlo",
     "did_client_key": "ck_85inyACz2ibKI5OI_1MjT",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_1901m4y8qxp8fjftjk58ddxwmgz0"
   },
   "quimica_II_curie": {
     "nombre": "Marie Curie · Química II",
     "did_agent_id": "v2_agt_Jt9c36WV",
     "did_client_key": "ck_ixuM8hHtyWfCM7L_Ks5tJ",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_1601m5n64sv8f51rztjky7axw233"
   },
   "sistemas_electromagneticos_faraday": {
     "nombre": "Michael Faraday · Análisis de Sistemas Eléctricos y Electromagnéticos",
     "did_agent_id": "v2_agt_AbFtyMdz",
     "did_client_key": "ck_7ZX-CCSK8lrPoxnCMQ7E1",
-    "elevenlabs_agent_id": ""
+    "elevenlabs_agent_id": "agent_8601m5jyw8ydem8ttkjx0nhaak3z"
   },
   "tecnologia_transformacion_alan": {
     "nombre": "Alan Turing · Tecnología y Transformación Digital",
