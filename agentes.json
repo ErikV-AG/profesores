@@ -141,7 +141,8 @@
     "nombre": "Luca Pacioli · Fundamentos de contabilidad",
     "did_agent_id": "v2_agt_oKG1IGUN",
     "did_client_key": "ck_hwd6WH6Ah0_ij_IdO4SjO",
-    "elevenlabs_agent_id": "agent_8601m5ka66y1fza8z5z0ejyp1sm5"
+    "elevenlabs_agent_id": "agent_8601m5ka66y1fza8z5z0ejyp1sm5
+"
   },
   "fundamentos_economia_smith": {
     "nombre": "Adam Smith · Fundamentos de Economía y Negocios",
@@ -280,5 +281,23 @@
     "did_agent_id": "v2_agt_Yy2D7LKu",
     "did_client_key": "ck_Qlx8AV308qzdmYnfdPSD1",
     "elevenlabs_agent_id": "agent_6901m5jdmf1he64sx4fkrwmgd3pq"
+  },
+  "practica_colaboracion_elvia": {
+    "nombre": "Elvia Carrillo · Práctica y colaboración Ciudadana I y II",
+    "did_agent_id": "v2_agt_8L_B34vE",
+    "did_client_key": "ck_7s6kTpcoNeFqB7SyUpRaI",
+    "elevenlabs_agent_id": "agent_7201m5nbyg5nf09r1g12t32f64fm"
+  },
+  "lengua_comunicacion_ines": {
+    "nombre": "Sor Juana · Lengua y Comunicación I",
+    "did_agent_id": "v2_agt_odr1iFGA",
+    "did_client_key": "ck_cA00Xrh2vExrVj7Cf7aQS",
+    "elevenlabs_agent_id": "agent_5801m5ncqxgbf0jrg4dxe3nww49z"
+  },
+  "fundamentos_comunicacion_taylor": {
+    "nombre": "Frederick Taylor · Fundamentos de Comunicación Empresarial",
+    "did_agent_id": "v2_agt_Y6xFUv0s",
+    "did_client_key": "ck_NpN6YzlfwXnb7SBTzhTKg",
+    "elevenlabs_agent_id": "agent_6501m4y5zsa4f8ea4xvqmj7t9e3a"
   }
 }
