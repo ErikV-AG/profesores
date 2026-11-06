@@ -293,6 +293,12 @@
     "did_client_key": "ck_cA00Xrh2vExrVj7Cf7aQS",
     "elevenlabs_agent_id": "agent_5801m5ncqxgbf0jrg4dxe3nww49z"
   },
+  "fundamentos_comunicacion_taylor": {
+    "nombre": "Frederick Taylor · Fundamentos de Comunicación Empresarial",
+    "did_agent_id": "v2_agt_Y6xFUv0s",
+    "did_client_key": "ck_NpN6YzlfwXnb7SBTzhTKg",
+    "elevenlabs_agent_id": "agent_6501m4y5zsa4f8ea4xvqmj7t9e3a"
+  },
   "pensamiento_matematico_alan": {
     "nombre": "Alan Turing · Pensamiento Matemático I",
     "did_agent_id": "v2_agt_kbnPYSl1",
