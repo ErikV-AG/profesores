@@ -257,12 +257,6 @@
     "did_client_key": "ck_jNGs4pZqYMLKHXdGU-UN-",
     "elevenlabs_agent_id": ""
   },
-  "pensamiento_matematico_alan": {
-    "nombre": "Alan Turing · Pensamiento Matemático",
-    "did_agent_id": "v2_agt_fjQgURYR",
-    "did_client_key": "ck_jNGs4pZqYMLKHXdGU-UN-",
-    "elevenlabs_agent_id": ""
-  },
   "mercadotecnia_comercio_smith": {
     "nombre": "Adam Smith · Mercadotecnia y Comercio",
     "did_agent_id": "v2_agt_AJmOSPmK",
