@@ -304,5 +304,17 @@
     "did_agent_id": "v2_agt_-_eYGQZH",
     "did_client_key": "ck_r7SGeEwau9lFO-XN7ldCB",
     "elevenlabs_agent_id": "agent_0501m6rxcgm4ex7afw4jxj7sj3wz"
+  },
+  "publicidad_ogilvy": {
+    "nombre": " David Ogilvy · Publicidad I",
+    "did_agent_id": "v2_agt_X9-Bs2s0",
+    "did_client_key": "ck_diuYX9FtlVnd76NASYxaw",
+    "elevenlabs_agent_id": "agent_9701m70mfsg2fm7byj1xeepngb7s"
+  },
+  "investigacion_mercados_smith": {
+    "nombre": " Adam Smith · Investigacion de Mercados I",
+    "did_agent_id": "v2_agt_pEQyVqQq",
+    "did_client_key": "ck_1IAxko7B3QW9AOA2ad3Of",
+    "elevenlabs_agent_id": "agent_6101m70n9hrtf20r11chqg4wdmke"
   }
 }
